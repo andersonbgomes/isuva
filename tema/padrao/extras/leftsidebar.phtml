@@ -1,0 +1,21 @@
+<?php
+/*
+O MENU.
+
+Está escrito à mão, e assim fica bem enquanto for curto. O __('rota')
+marca o item da rota aberta.
+
+Quando o projecto crescer, isto passa a sair de um array (ou da base de
+dados) com um foreach -- e é aí que se lhe acrescenta a verificação de
+permissões, para cada pessoa ver só o que lhe toca.
+*/
+?>
+<nav class="menu">
+	<ul>
+		<li><a class="<?=__('index')?>" href="<?=url_base('')?>">Painel</a></li>
+
+		<?php /* As rotas do projecto entram aqui:
+		<li><a class="<?=__('clientes')?>" href="<?=url_base('clientes')?>">Clientes</a></li>
+		*/ ?>
+	</ul>
+</nav>

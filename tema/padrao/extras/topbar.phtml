@@ -1,0 +1,16 @@
+<?php
+/*
+A barra de cima: o nome do sistema e quem está dentro.
+*/
+$eu = $this->ver->usuario ?? [];
+?>
+<header class="topo">
+	<a class="topo-marca" href="<?=url_base('')?>"><?=esc(configura('tit'))?></a>
+
+	<div class="topo-direita">
+		<?php if(!empty($eu)): ?>
+		<span class="topo-quem"><?=esc($eu['nome_us'] ?? '')?></span>
+		<a class="btn btn-claro" href="<?=url_base('sair')?>">Sair</a>
+		<?php endif; ?>
+	</div>
+</header>

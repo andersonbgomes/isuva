@@ -1,0 +1,35 @@
+# ============================================================================
+# Endereços sem o index.php
+# ============================================================================
+# Sem isto a aplicação funciona na mesma, mas só por
+# /index.php/clientes/editar/7. Com isto, por /clientes/editar/7.
+#
+# O router lê o $_SERVER['PATH_INFO'] -- é por isso que a regra reescreve
+# para "index.php/$1" e não para "index.php?r=$1".
+# ============================================================================
+
+RewriteEngine On
+
+# Um ficheiro ou uma pasta que exista serve-se tal e qual (o CSS, as
+# imagens, o instalador). Só o que NÃO existe é que vai ao router.
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# E as pastas de código nunca são servidas como páginas.
+RewriteCond $1 !^(app|lib|vdr|tema|instalar|instalacao|migrations|robots\.txt)
+
+RewriteRule ^(.+)$ index.php/$1 [L]
+
+# ----------------------------------------------------------------------------
+# O que não se serve a ninguém
+# ----------------------------------------------------------------------------
+# Num servidor sem PHP a correr (ou com uma configuração enganada), um
+# pedido ao app/Conecta.php devolvia a password em texto.
+<FilesMatch "^(Conecta\.php|.*\.sql|.*\.log|\.gitignore|.*\.md)$">
+	Require all denied
+</FilesMatch>
+
+# ----------------------------------------------------------------------------
+# Não listar o conteúdo das pastas
+# ----------------------------------------------------------------------------
+Options -Indexes

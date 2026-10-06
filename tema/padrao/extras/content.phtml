@@ -1,0 +1,17 @@
+<?php
+/*
+Abre a área de conteúdo e mostra a mensagem da última acção, se houver.
+
+A mensagem vem da sessão (ver Acao::aviso()) e é APAGADA aqui: se ficasse
+lá, voltava a aparecer na página seguinte e na outra a seguir.
+*/
+?>
+<main class="conteudo">
+	<?php if(!empty($_SESSION['txt'])): ?>
+	<div class="aviso aviso-<?=esc($_SESSION['tp'] ?? 'info')?>">
+		<?php if(!empty($_SESSION['tt'])): ?><strong><?=esc($_SESSION['tt'])?></strong> <?php endif; ?>
+		<?=esc($_SESSION['txt'])?>
+	</div>
+	<?php unset($_SESSION['txt'], $_SESSION['tp'], $_SESSION['tt']); endif; ?>
+
+	<?php include _C_._P_.'tema'._P_.$this->ver->viwtema._P_.'extras'._P_.'breadcumb.phtml'; ?>

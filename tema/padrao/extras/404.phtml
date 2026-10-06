@@ -1,0 +1,35 @@
+<?php
+/*
+Rota desconhecida.
+
+Chega-se aqui pelo router (vdr/App.php) quando não há controlador ou
+acção com esse nome. Não herda a moldura do tema de propósito: a moldura
+precisa de um controlador, e aqui não há nenhum.
+
+Responde 404 a sério, e não 200 com uma página de erro: um 200 diz ao
+browser, e a quem olhe os registos, que a página existe e está bem.
+*/
+if(!headers_sent()){ http_response_code(404); }
+?>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Página não encontrada</title>
+	<link rel="stylesheet" href="<?=url_versionada('tema/padrao/ext/assets/css/estilo.css')?>">
+</head>
+<body>
+	<div class="centrado">
+		<div class="cartao cartao-estreito texto-centro">
+			<p class="erro-numero">404</p>
+			<h1>Esta página não existe</h1>
+			<p class="texto-fraco">
+				O endereço <code><?=esc(rota.(acao !== 'index' ? '/'.acao : ''))?></code>
+				não corresponde a nenhuma página desta aplicação.
+			</p>
+			<a class="btn" href="<?=url_base('')?>">Voltar ao início</a>
+		</div>
+	</div>
+</body>
+</html>

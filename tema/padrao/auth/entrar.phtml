@@ -1,0 +1,58 @@
+<?php
+/*
+O ecrã de entrada.
+
+Desenhado com renderizar_solto(): sem a moldura da aplicação, porque
+quem está aqui ainda não está dentro dela. Por isso é esta vista que
+escreve o <html> e o <head> -- não há moldura a fazê-lo.
+
+O csrf_field() não é enfeite: sem ele, uma página de outro site podia
+submeter este formulário com o browser de quem lá passasse.
+*/
+?>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+	<?=head()?>
+	<link rel="stylesheet" href="<?=url_versionada('tema/padrao/ext/assets/css/estilo.css')?>">
+</head>
+<body>
+
+<div class="centrado">
+	<div class="cartao cartao-estreito">
+
+		<h1 class="texto-centro"><?=esc(configura('tit'))?></h1>
+		<p class="texto-fraco texto-centro">Entre com a sua conta.</p>
+
+		<?php if(!empty($_SESSION['txt'])): ?>
+		<div class="aviso aviso-<?=esc($_SESSION['tp'] ?? 'info')?>">
+			<?php if(!empty($_SESSION['tt'])): ?><strong><?=esc($_SESSION['tt'])?></strong> <?php endif; ?>
+			<?=esc($_SESSION['txt'])?>
+		</div>
+		<?php unset($_SESSION['txt'], $_SESSION['tp'], $_SESSION['tt']); endif; ?>
+
+		<?php if(!empty($this->ver->bloqueado)): ?>
+		<div class="aviso aviso-danger">
+			Houve demasiadas tentativas falhadas. Espere
+			<?=(int)$this->ver->minutos?> minutos antes de tentar outra vez.
+		</div>
+		<?php else: ?>
+
+		<form method="post" action="<?=url_base('auth/entrar')?>">
+			<?=csrf_field()?>
+
+			<label for="email">E-mail</label>
+			<input type="email" id="email" name="email" required autofocus autocomplete="username">
+
+			<label for="senha">Palavra-passe</label>
+			<input type="password" id="senha" name="senha" required autocomplete="current-password">
+
+			<button type="submit" class="btn btn-largo">Entrar</button>
+		</form>
+
+		<?php endif; ?>
+	</div>
+</div>
+
+</body>
+</html>

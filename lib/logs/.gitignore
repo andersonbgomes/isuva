@@ -1,0 +1,4 @@
+# A pasta tem de existir no git (senão o registo de erros não tem onde
+# escrever numa cópia acabada de descarregar); o conteúdo dela não.
+*
+!.gitignore

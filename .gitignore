@@ -1,0 +1,21 @@
+# A ligação à base de dados: a password nunca entra no git.
+# O modelo é o app/Conecta.exemplo.php, e é o instalador que gera este.
+/app/Conecta.php
+
+# A trava do instalador: é de cada instalação, não do projecto.
+/instalar/INSTALADO
+
+# O registo de erros.
+/lib/logs/*.log
+
+# Ficheiros enviados pelos utilizadores (fotografias, anexos).
+# Descomentar quando o projecto começar a receber ficheiros:
+# /lib/imgs/
+# /lib/anexos/
+
+# Lixo do sistema e dos editores
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

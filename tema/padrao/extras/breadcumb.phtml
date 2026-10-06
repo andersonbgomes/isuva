@@ -1,0 +1,24 @@
+<?php
+/*
+O título da página, e o sítio dos botões dela.
+
+É aqui -- e não dentro de cada vista -- que vão os botões de uma página
+(Novo, Exportar, Editar). Uma linha de botões em sítio diferente de
+página para página nota-se logo, e lê-se como remendo.
+*/
+?>
+	<div class="miolo-topo">
+		<h1><?=esc(titulo())?></h1>
+		<div class="miolo-botoes">
+			<?php
+			switch (rota) {
+				/* Os botões de cada rota:
+
+				case 'clientes':
+					?><a class="btn" href="<?=url_base('clientes/novo')?>">Novo cliente</a><?php
+					break;
+				*/
+			}
+			?>
+		</div>
+	</div>

@@ -1,0 +1,52 @@
+<?php
+/*
+A PRIMEIRA VISTA -- e o molde das outras.
+
+Uma vista é HTML com os buracos preenchidos pelo que o controlador pôs em
+$this->ver. Não vai buscar dados à base de dados nem decide nada: isso é
+do controlador. Se uma vista precisar de uma consulta, é sinal de que
+falta uma linha no controlador.
+
+E tudo o que venha de fora -- da base de dados, do $_GET, do $_POST --
+sai por esc(). Sem excepção: é o que separa um nome com um < lá dentro
+de aparecer escrito, ou de correr JavaScript no browser de quem o ler.
+*/
+?>
+<div class="cartao">
+	<h2><?=esc($this->ver->titulo)?></h2>
+
+	<p class="texto-fraco">
+		Este é o esqueleto a funcionar. A página que está a ler vem de
+		<code>tema/padrao/index/inicio.phtml</code>, desenhada pelo
+		<code>IndexControlo::index()</code>.
+	</p>
+
+	<p class="texto-fraco">São <?=esc($this->ver->agora)?>.</p>
+</div>
+
+<div class="cartao">
+	<h3>Por onde começar</h3>
+	<ol class="lista-passos">
+		<li>
+			<strong>Um controlador novo</strong> em <code>app/app.ctrl/</code>, com o nome
+			<code>&lt;Rota&gt;Controlo.php</code>. Fica em <code>/&lt;rota&gt;</code>.
+		</li>
+		<li>
+			<strong>A pasta dele no tema</strong>, <code>tema/padrao/&lt;rota&gt;/</code>, com um
+			<code>.phtml</code> por vista.
+		</li>
+		<li>
+			<strong>Um modelo</strong> em <code>app/app.mdl/</code> por cada tabela — copiar o
+			<code>Usuario.php</code>, que tem as instruções todas.
+		</li>
+		<li>
+			<strong>A tabela</strong> num ficheiro <code>.sql</code> em <code>migrations/</code>, e a
+			mesma estrutura em <code>instalacao/instalacao.sql</code> — senão uma instalação de
+			raiz nasce sem ela.
+		</li>
+		<li>
+			<strong>O título e o menu</strong>: um <code>case</code> em <code>lib/ajuda/head.php</code>
+			e uma linha em <code>tema/padrao/extras/leftsidebar.phtml</code>.
+		</li>
+	</ol>
+</div>

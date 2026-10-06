@@ -1,0 +1,172 @@
+/*
+O ESTILO DO TEMA PADRÃO.
+
+Escrito à mão e curto de propósito: o esqueleto não traz Bootstrap nem
+framework nenhuma, para não impor uma escolha ao projecto que vier a
+seguir. O que está aqui serve para as páginas não parecerem partidas
+enquanto o tema a sério não existe.
+
+Quem for usar Bootstrap (ou outro) acrescenta-o no extras/cima.phtml e
+pode deitar este ficheiro fora.
+*/
+
+:root {
+	--cor:        #3b5de7;
+	--cor-escura: #2c49c4;
+	--texto:      #1a1d23;
+	--fraco:      #6b7280;
+	--borda:      #e5e7eb;
+	--fundo:      #f6f7fb;
+	--branco:     #ffffff;
+	--raio:       10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+	margin: 0;
+	background: var(--fundo);
+	color: var(--texto);
+	font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+code {
+	background: rgba(0, 0, 0, .06);
+	padding: .12em .4em;
+	border-radius: 4px;
+	font-size: .9em;
+}
+
+/* ---------- barra de cima ---------- */
+.topo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: .85rem 1.25rem;
+	background: var(--branco);
+	border-bottom: 1px solid var(--borda);
+}
+.topo-marca { font-weight: 700; color: var(--texto); text-decoration: none; }
+.topo-direita { display: flex; align-items: center; gap: .75rem; }
+.topo-quem { color: var(--fraco); font-size: 14px; }
+
+/* ---------- menu ---------- */
+.menu { background: var(--branco); border-bottom: 1px solid var(--borda); }
+.menu ul { display: flex; flex-wrap: wrap; gap: .25rem; list-style: none; margin: 0; padding: .4rem 1.25rem; }
+.menu a {
+	display: block;
+	padding: .45rem .85rem;
+	border-radius: 8px;
+	color: var(--fraco);
+	text-decoration: none;
+	font-size: 14px;
+}
+.menu a:hover { background: rgba(0, 0, 0, .04); color: var(--texto); }
+.menu a.active { background: var(--cor); color: #fff; }
+
+/* ---------- conteúdo ---------- */
+.conteudo { max-width: 1040px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+.miolo-topo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: .75rem;
+	margin-bottom: 1.25rem;
+}
+.miolo-topo h1 { font-size: 22px; margin: 0; }
+.miolo-botoes { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+.cartao {
+	background: var(--branco);
+	border: 1px solid var(--borda);
+	border-radius: var(--raio);
+	padding: 1.5rem;
+	margin-bottom: 1.25rem;
+}
+.cartao h2 { margin: 0 0 .5rem; font-size: 20px; }
+.cartao h3 { margin: 0 0 .75rem; font-size: 16px; }
+.cartao > *:last-child { margin-bottom: 0; }
+
+.texto-fraco  { color: var(--fraco); }
+.texto-centro { text-align: center; }
+
+.lista-passos { margin: 0; padding-left: 1.2rem; color: var(--fraco); }
+.lista-passos li { margin-bottom: .6rem; }
+.lista-passos strong { color: var(--texto); }
+
+/* ---------- avisos ---------- */
+.aviso {
+	padding: .75rem 1rem;
+	border-radius: 8px;
+	margin-bottom: 1rem;
+	border: 1px solid transparent;
+	font-size: 14px;
+}
+.aviso-success { background: #e8f7ee; border-color: #bfe6cd; color: #166534; }
+.aviso-danger  { background: #fdecee; border-color: #f5c2c7; color: #991b1b; }
+.aviso-warning { background: #fff7e6; border-color: #ffe0a3; color: #92400e; }
+.aviso-info    { background: #eaf0ff; border-color: #c7d4ff; color: #1e3a8a; }
+
+/* ---------- botões e campos ---------- */
+.btn {
+	display: inline-block;
+	padding: .5rem 1rem;
+	border: 0;
+	border-radius: 8px;
+	background: var(--cor);
+	color: #fff;
+	font: inherit;
+	font-size: 14px;
+	text-decoration: none;
+	cursor: pointer;
+}
+.btn:hover { background: var(--cor-escura); }
+.btn-claro { background: rgba(0, 0, 0, .06); color: var(--texto); }
+.btn-claro:hover { background: rgba(0, 0, 0, .1); }
+.btn-largo { width: 100%; padding: .65rem 1rem; margin-top: 1rem; }
+
+label { display: block; margin: .9rem 0 .3rem; font-size: 14px; font-weight: 600; }
+
+input[type=text], input[type=email], input[type=password], input[type=number], select, textarea {
+	width: 100%;
+	padding: .55rem .7rem;
+	border: 1px solid var(--borda);
+	border-radius: 8px;
+	background: var(--branco);
+	font: inherit;
+	font-size: 14px;
+}
+input:focus, select:focus, textarea:focus {
+	outline: 0;
+	border-color: var(--cor);
+	box-shadow: 0 0 0 3px rgba(59, 93, 231, .15);
+}
+
+/* ---------- páginas sem moldura (entrada, 404) ---------- */
+.centrado {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5rem;
+}
+.cartao-estreito { width: 100%; max-width: 400px; margin: 0; }
+.erro-numero { font-size: 54px; font-weight: 700; color: var(--cor); margin: 0; line-height: 1; }
+
+/* ---------- rodapé ---------- */
+.rodape {
+	max-width: 1040px;
+	margin: 0 auto;
+	padding: 1.25rem;
+	color: var(--fraco);
+	font-size: 13px;
+	border-top: 1px solid var(--borda);
+}
+
+/* ---------- tabelas ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: .6rem .7rem; border-bottom: 1px solid var(--borda); text-align: left; vertical-align: top; }
+th { color: var(--fraco); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }

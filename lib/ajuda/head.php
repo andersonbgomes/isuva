@@ -25,6 +25,26 @@ function titulo(){
 			$titulo = 'Entrar';
 			break;
 
+		case 'jogos':
+			$titulo = 'Jogos';
+			break;
+
+		case 'jogar':
+			switch (acao) {
+				case 'local': $titulo = 'Jogar do meu computador'; break;
+				default:      $titulo = 'A jogar';                 break;
+			}
+			break;
+
+		case 'admin':
+			switch (acao) {
+				case 'novo':     $titulo = 'Adicionar jogo';    break;
+				case 'editar':   $titulo = 'Editar jogo';       break;
+				case 'emulador': $titulo = 'Emulador e BIOS';   break;
+				default:         $titulo = 'Gerir jogos';       break;
+			}
+			break;
+
 		/*
 		As rotas do projecto entram aqui. Com acções diferentes, um
 		switch dentro do case:

@@ -1,0 +1,48 @@
+<?php
+/*
+Os campos comuns a "Adicionar" e "Editar": título, consola, descrição e
+capa. Incluído pelas duas vistas, para não haver duas cópias a divergir.
+
+Espera $jogo (a linha a editar, ou [] num jogo novo).
+*/
+$jogo = $jogo ?? [];
+?>
+	<label for="titulo">Título</label>
+	<input type="text" id="titulo" name="titulo" required maxlength="150" value="<?=esc($jogo['titulo_jg'] ?? '')?>">
+
+	<label for="consola">Consola</label>
+	<select id="consola" name="consola" required>
+		<option value="">Escolha a consola</option>
+		<?php foreach (Consolas::porFamilia() as $familia => $lista): ?>
+		<optgroup label="<?=esc($familia)?>">
+			<?php foreach ($lista as $chave => $c): ?>
+			<option value="<?=esc($chave)?>"
+			        data-ext="<?=esc(implode(',', Consolas::extensoes($chave)))?>"
+			        data-nota="<?=esc($c['nota'])?>"
+			        <?=($jogo['consola_jg'] ?? '') === $chave ? 'selected' : ''?>><?=esc($c['nome'])?></option>
+			<?php endforeach; ?>
+		</optgroup>
+		<?php endforeach; ?>
+	</select>
+	<p class="ajuda" id="consola-nota"></p>
+
+	<label for="descricao">Descrição <span class="texto-fraco">(opcional)</span></label>
+	<textarea id="descricao" name="descricao" rows="3" maxlength="2000"><?=esc($jogo['descricao_jg'] ?? '')?></textarea>
+
+	<label for="capa">Capa <span class="texto-fraco">(opcional: JPG, PNG, WEBP ou GIF, até <?=esc(Armazem::legivel(TAMANHO_MAX_CAPA))?>)</span></label>
+	<input type="file" id="capa" name="capa" accept="image/jpeg,image/png,image/webp,image/gif">
+
+<script>
+//a nota da consola escolhida (que formatos, se precisa de BIOS)
+(function () {
+	var sel = document.getElementById('consola'), nota = document.getElementById('consola-nota');
+	function mostrar() {
+		var o = sel.options[sel.selectedIndex];
+		nota.textContent = o && o.dataset.ext
+			? o.dataset.nota + ' Formatos: ' + o.dataset.ext.split(',').map(function (e) { return '.' + e; }).join(' ')
+			: '';
+	}
+	sel.addEventListener('change', mostrar);
+	mostrar();
+})();
+</script>

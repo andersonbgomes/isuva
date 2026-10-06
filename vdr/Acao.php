@@ -80,6 +80,28 @@ abstract class Acao {
 
 
 	//=============================================================
+	// Permissões
+	//=============================================================
+
+	/*
+	Só o administrador (nivl_us = 1) passa daqui.
+
+	Chama-se no início de CADA acção que só o administrador pode fazer, e
+	não só no menu: esconder o botão não fecha a porta -- quem souber o
+	endereço escreve-o à mão.
+	*/
+	protected function so_admin() {
+		if(!$this->e_admin()){
+			$this->voltar('danger', 'Sem permissão', 'Esta página é só para administradores.', '');
+		}
+	}
+
+	protected function e_admin() {
+		return (int)($this->ver->usuario['nivl_us'] ?? 0) === 1;
+	}
+
+
+	//=============================================================
 	// Mensagens
 	//=============================================================
 

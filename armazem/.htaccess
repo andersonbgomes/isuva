@@ -1,0 +1,7 @@
+# ============================================================================
+# O armazém dos jogos NUNCA é servido directamente.
+# ============================================================================
+# Tudo o que está aqui sai pelo JogarControlo, que verifica a sessão antes.
+# Sem esta trava, quem soubesse o nome de um ficheiro levava o jogo sem
+# conta nenhuma. (Os nomes no disco são aleatórios, como segunda trava.)
+Require all denied

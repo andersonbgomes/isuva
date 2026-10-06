@@ -12,10 +12,17 @@ permissões, para cada pessoa ver só o que lhe toca.
 ?>
 <nav class="menu">
 	<ul>
-		<li><a class="<?=__('index')?>" href="<?=url_base('')?>">Painel</a></li>
+		<li><a class="<?=__('jogos')?>" href="<?=url_base('jogos')?>">Jogos</a></li>
+		<li><a class="<?=__('jogar')?>" href="<?=url_base('jogar/local')?>">Jogar do meu computador</a></li>
 
-		<?php /* As rotas do projecto entram aqui:
-		<li><a class="<?=__('clientes')?>" href="<?=url_base('clientes')?>">Clientes</a></li>
-		*/ ?>
+		<?php
+		/*
+		O painel só aparece a quem o pode usar. Esconder aqui é só
+		arrumação: a porta fecha-se no AdminControlo, com so_admin() em
+		cada acção.
+		*/
+		if($this->e_admin()): ?>
+		<li><a class="<?=__('admin')?>" href="<?=url_base('admin')?>">Gerir jogos</a></li>
+		<?php endif; ?>
 	</ul>
 </nav>

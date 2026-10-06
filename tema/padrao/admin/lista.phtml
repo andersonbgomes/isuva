@@ -1,0 +1,52 @@
+<?php
+/*
+Todos os jogos, escondidos incluídos, com as acções de cada um.
+
+Apagar é um POST com CSRF, e não um link: um link de apagar pode ser
+seguido por um pré-carregamento do browser, por um antivírus que visita
+os endereços da página, ou por uma imagem noutro site que aponte para ele.
+*/
+?>
+<div class="cartao">
+	<p class="texto-fraco">
+		<?=count($this->ver->jogos)?> jogo(s), <?=esc(Armazem::legivel($this->ver->espaco))?> no disco.
+	</p>
+
+	<?php if(empty($this->ver->jogos)): ?>
+	<p>Ainda não há jogos. <a href="<?=url_base('admin/novo')?>">Adicionar o primeiro</a>.</p>
+	<?php else: ?>
+	<div class="tabela-rola">
+	<table>
+		<thead>
+			<tr>
+				<th>Título</th>
+				<th>Consola</th>
+				<th>Ficheiro</th>
+				<th>Tamanho</th>
+				<th>Estado</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php foreach ($this->ver->jogos as $j): ?>
+			<tr>
+				<td><a href="<?=url_base('jogar/ver/'.(int)$j['id_jg'])?>"><?=esc($j['titulo_jg'])?></a></td>
+				<td><?=esc(Consolas::nome($j['consola_jg']))?></td>
+				<td><code><?=esc($j['nome_jg'])?></code></td>
+				<td><?=esc(Armazem::legivel($j['tamanho_jg']))?></td>
+				<td><?=(int)$j['stto_jg'] === 1 ? 'Visível' : '<span class="texto-fraco">Escondido</span>'?></td>
+				<td class="acoes">
+					<a class="btn btn-claro" href="<?=url_base('admin/editar/'.(int)$j['id_jg'])?>">Editar</a>
+					<form method="post" action="<?=url_base('admin/apagar/'.(int)$j['id_jg'])?>"
+					      onsubmit="return confirm('Apagar este jogo? O ficheiro sai também do disco.')">
+						<?=csrf_field()?>
+						<button type="submit" class="btn btn-perigo">Apagar</button>
+					</form>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+	<?php endif; ?>
+</div>

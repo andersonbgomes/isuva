@@ -81,8 +81,8 @@ Cinco ficheiros, sempre os mesmos:
 | A tabela | um `.sql` em `migrations/` **e** em `instalacao/instalacao.sql` |
 | O título e o menu | um `case` em `lib/ajuda/head.php`, uma linha em `tema/padrao/extras/leftsidebar.phtml` |
 
-O `IndexControlo`, o `Usuario` e a vista `index/inicio.phtml` estão
-comentados de ponta a ponta para servirem de molde.
+O `IndexControlo` e o `Usuario` estão comentados de ponta a ponta para
+servirem de molde.
 
 ## As três regras que não se discutem
 
@@ -113,3 +113,86 @@ projecto que vier a seguir.
 
 Um tema novo é uma pasta ao lado, com os mesmos ficheiros em `extras/`.
 Troca-se na definição `tema`, na tabela `app_config`.
+
+## Os jogos
+
+O site é um catálogo de jogos retro. O emulador (o
+[EmulatorJS](https://emulatorjs.org), núcleos do RetroArch compilados
+para WebAssembly) corre **no browser de quem joga**. O servidor só
+entrega a página e o ficheiro do jogo, por isso um alojamento PHP normal
+aguenta muitos jogadores.
+
+| Rota | O quê |
+|---|---|
+| `/jogos` | o catálogo, com filtro por consola e pesquisa |
+| `/jogar/ver/7` | jogar o jogo 7 |
+| `/jogar/local` | jogar um ficheiro do próprio computador (não é enviado ao servidor) |
+| `/admin` | gerir jogos: só para administradores (`nivl_us = 1`) |
+| `/admin/emulador` | de onde vem o EmulatorJS, e as BIOS |
+
+**Consolas:** NES, SNES, N64, Game Boy/Color, GBA, DS, Master System,
+Game Gear, Mega Drive, Sega CD, 32X, Saturn, PS1 e PSP. A lista, com os
+formatos aceites, está em `lib/jogos/Consolas.php`. PS2 e PS3 não têm
+emulador que corra no browser: ficam para a Fase 2 (servidor com GPU e
+streaming).
+
+### Adicionar jogos
+
+- **Por ficheiro:** o browser envia-o aos pedaços (até 8 MB cada), por
+  isso o `upload_max_filesize` e o `post_max_size` do servidor não limitam
+  o tamanho do jogo. O limite é o `TAMANHO_MAX_JOGO` (2 GB), em
+  `lib/define.php`, e é do browser: o emulador carrega o jogo inteiro para
+  a memória.
+- **Por link:** o servidor descarrega o ficheiro e guarda-o (precisa da
+  extensão `curl` do PHP). Tem de ser um link de descarga directa. Links
+  para a rede interna são recusados.
+- **Formatos de CD** (PS1, Sega CD, Saturn): o melhor é um `.chd`, ou o
+  `.cue` e os `.bin` juntos num `.zip`. Um `.bin` sozinho nem sempre arranca.
+
+### BIOS
+
+A PS1, o Saturn, o GBA e o DS correm sem BIOS, mas melhor com ela. O
+**Sega CD não arranca sem ela**. As BIOS têm direitos de autor e não vêm
+com o site: o administrador envia as suas em `/admin/emulador`, **com o
+nome original** (`scph5501.bin`, `bios_CD_U.bin`, ...), porque é pelo
+nome que o emulador as procura.
+
+### EmulatorJS: CDN ou cópia própria
+
+Por omissão o browser carrega o EmulatorJS da CDN oficial
+(`https://cdn.emulatorjs.org/stable/data/`). Para não depender dela:
+
+1. descarregar a última versão em
+   <https://github.com/EmulatorJS/EmulatorJS/releases> (traz os núcleos);
+2. copiar a pasta `data/` para `emulatorjs/data/`, na raiz do site (está
+   no `.gitignore`: são centenas de MB);
+3. em `/admin/emulador`, escrever `emulatorjs/data/`.
+
+### O que o servidor precisa
+
+- **HTTPS.** O PSP usa threads (`SharedArrayBuffer`), e os browsers só as
+  dão a páginas em HTTPS com os cabeçalhos COOP/COEP. O
+  `JogarControlo::isolar()` manda os cabeçalhos, e o HTTPS fica do lado do
+  alojamento. Sem HTTPS, as outras consolas funcionam na mesma. No Safari
+  o PSP não arranca.
+- **`armazem/` fechado ao exterior.** No Apache trata disso o
+  `armazem/.htaccess`. No **nginx**, que não lê `.htaccess`, é preciso um
+  `location /armazem/ { deny all; }`, ou então apontar o `PASTA_ARMAZEM`
+  (`lib/define.php`) para uma pasta fora do site.
+- **Tempo para descargas por link.** A descarga corre durante o pedido. Um
+  jogo grande num alojamento com `max_execution_time` curto (ou um proxy
+  com tempo limite) pode ser cortado a meio. Aí, o melhor é enviar o ficheiro.
+
+### Gravações
+
+O progresso dos jogos fica guardado **no browser** de cada pessoa
+(IndexedDB, pelo EmulatorJS). Outro computador ou outro browser não tem
+as gravações. Guardá-las no servidor, por conta, é um passo seguinte
+natural.
+
+### Direitos de autor
+
+Ponha no catálogo só jogos de que tem o direito de distribuir:
+*homebrew*, jogos livres, ou cópias das suas consolas e discos num site
+privado. Pôr jogos comerciais à disposição do público é pirataria.
+

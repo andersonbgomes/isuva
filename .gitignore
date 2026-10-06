@@ -8,6 +8,13 @@
 # O registo de erros.
 /lib/logs/*.log
 
+# O EmulatorJS, quando copiado para o servidor em vez de vir da CDN
+# (ver o LEIA-ME, "EmulatorJS: CDN ou cópia própria"). São centenas de MB.
+/emulatorjs/
+
+# Os jogos, as capas e as BIOS enviados ficam em armazem/, que tem o seu
+# próprio .gitignore (para a pasta e a trava .htaccess irem no git).
+
 # Ficheiros enviados pelos utilizadores (fotografias, anexos).
 # Descomentar quando o projecto começar a receber ficheiros:
 # /lib/imgs/

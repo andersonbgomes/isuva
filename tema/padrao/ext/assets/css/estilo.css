@@ -170,3 +170,89 @@ input:focus, select:focus, textarea:focus {
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { padding: .6rem .7rem; border-bottom: 1px solid var(--borda); text-align: left; vertical-align: top; }
 th { color: var(--fraco); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+
+/* o atributo hidden manda sempre -- sem isto, um display:flex/grid de
+   uma classe ganhava-lhe e o elemento "escondido" continuava à vista */
+[hidden] { display: none !important; }
+
+/* ---------- formulários: extras ---------- */
+textarea { resize: vertical; }
+input[type=file] { font-size: 14px; max-width: 100%; }
+.ajuda { color: var(--fraco); font-size: 13px; margin: .35rem 0 0; }
+.ajuda.erro { color: #991b1b; }
+.escolha { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
+.escolha label, label:has(> input[type=checkbox]) { font-weight: 400; display: flex; align-items: center; gap: .4rem; }
+.btn-perigo { background: #dc2626; }
+.btn-perigo:hover { background: #b91c1c; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.progresso { height: 8px; background: var(--borda); border-radius: 99px; overflow: hidden; margin-top: .6rem; }
+.progresso > div { height: 100%; width: 0; background: var(--cor); transition: width .2s; }
+
+.tabela-rola { overflow-x: auto; }
+td.acoes { white-space: nowrap; text-align: right; }
+td.acoes form { display: inline-flex; gap: .4rem; align-items: center; margin-left: .3rem; }
+td.acoes input[type=file] { width: 200px; }
+
+.capa-actual { display: flex; align-items: center; gap: 1rem; margin-top: .9rem; }
+.capa-actual img { width: 80px; height: 106px; object-fit: cover; border-radius: 6px; border: 1px solid var(--borda); }
+
+/* ---------- catálogo ---------- */
+.filtros { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
+.filtros select { width: auto; flex: 0 1 260px; }
+.filtros input[type=text] { width: auto; flex: 1 1 200px; }
+
+.grelha-jogos {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 1rem;
+}
+.jogo {
+	display: flex;
+	flex-direction: column;
+	background: var(--branco);
+	border: 1px solid var(--borda);
+	border-radius: var(--raio);
+	overflow: hidden;
+	color: var(--texto);
+	text-decoration: none;
+	transition: transform .15s, box-shadow .15s;
+}
+.jogo:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, .08); }
+.jogo-capa {
+	aspect-ratio: 3 / 4;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #2c49c4, #6d28d9);
+}
+.jogo-capa img { width: 100%; height: 100%; object-fit: cover; }
+.jogo-capa span { font-size: 48px; font-weight: 700; color: rgba(255, 255, 255, .85); }
+.jogo-info { padding: .6rem .75rem .75rem; display: flex; flex-direction: column; gap: .15rem; }
+.jogo-info strong { font-size: 14px; line-height: 1.3; }
+.jogo-info small { color: var(--fraco); font-size: 12px; }
+
+/* ---------- a página do jogo (escura, sem moldura) ---------- */
+body.palco { background: #0b0d12; color: #e5e7eb; min-height: 100vh; display: flex; flex-direction: column; }
+.palco-topo { display: flex; align-items: center; gap: 1rem; padding: .75rem 1rem; }
+.palco-titulo { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.palco-titulo strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.palco-titulo small { color: #9ca3af; }
+.btn-escuro { background: #1f2430; color: #e5e7eb; }
+.btn-escuro:hover { background: #2a3040; }
+
+/* o EmulatorJS ocupa o tamanho do elemento pai -- tem de ter altura definida */
+.palco-ecra { flex: 1; display: flex; padding: 0 1rem; }
+#jogo { width: 100%; max-width: 1200px; height: calc(100vh - 150px); min-height: 300px; margin: 0 auto; }
+
+.palco-nota { color: #9ca3af; font-size: 13px; max-width: 1200px; margin: .75rem auto 1rem; padding: 0 1rem; }
+.palco-aviso {
+	max-width: 1200px; margin: 0 auto .75rem; padding: .75rem 1rem;
+	background: #3b2a0a; border: 1px solid #92400e; color: #fde68a; border-radius: 8px; font-size: 14px;
+}
+.palco-escolha {
+	width: calc(100% - 2rem); max-width: 520px; margin: 2rem auto; padding: 1.5rem;
+	background: #141821; border: 1px solid #262c3a; border-radius: var(--raio);
+}
+.palco-escolha select, .palco-escolha input[type=file] { background: #0b0d12; color: #e5e7eb; border-color: #262c3a; }
+.palco-escolha .palco-nota { padding: 0; margin: .4rem 0 0; }

@@ -1,11 +1,15 @@
 # Este projecto
 
-PHP, MVC simples, **sem framework**. Nasceu do esqueleto `MVC` — ver o
-`LEIA-ME.md` para a planta da casa.
+Um site de jogos retro: catálogo gerido por um administrador, e as
+consolas (Nintendo, Sega, PS1, PSP) emuladas **no browser de quem joga**
+pelo EmulatorJS. PHP, MVC simples, **sem framework** — ver o `LEIA-ME.md`.
 
-> Ao começar um projecto a partir daqui, substituir este primeiro
-> parágrafo pelo que o projecto é, em duas linhas. O resto do ficheiro
-> vale para qualquer um.
+O domínio dos jogos vive em `lib/jogos/`: `Consolas.php` (que consolas,
+que núcleo, que extensões), `Armazem.php` (ficheiros no disco, envios aos
+pedaços, servir com Range), `Descarga.php` (importar por link, com
+protecção SSRF) e `Bios.php`. PS2/PS3 não cabem no browser: são a Fase 2,
+com streaming a partir de um servidor com GPU — não se acrescentam à
+`Consolas::LISTA`.
 
 ## Estrutura
 
@@ -21,6 +25,9 @@ PHP, MVC simples, **sem framework**. Nasceu do esqueleto `MVC` — ver o
 - `tema/` — os temas. O activo vem da definição `tema` (`app_config`).
 - `instalacao/instalacao.sql` — o que monta uma base de dados de raiz.
 - `migrations/` — as alterações à base de dados, uma por ficheiro.
+- `armazem/` — os jogos, capas e BIOS enviados (fora do git, fechado ao
+  exterior). Nada daqui é servido directamente: sai tudo pelo
+  `JogarControlo`, depois de verificar a sessão.
 
 O construtor de `Acao` exige sessão iniciada em todos os controladores
 excepto os da lista `Acao::SEM_SESSAO`.

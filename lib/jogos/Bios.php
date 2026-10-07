@@ -31,14 +31,28 @@ class Bios {
 	DB_GLOBAL não o sabe fazer -- e é a forma de gravar uma definição
 	exista ela ou não (a conf_chave é UNIQUE).
 	*/
-	public static function guardar($consola, $disco, $nome) {
+	/*
+	Com a BIOS guarda-se também QUEM a enviou, QUANDO e o TAMANHO: a BIOS
+	é do site inteiro (a padrão de cada consola), e um administrador que
+	chegue depois tem de perceber, sem perguntar, que já lá está uma e de
+	onde veio. São campos a mais no mesmo JSON da app_config -- as BIOS
+	guardadas antes disto continuam a ler-se, só sem esses dados.
+	*/
+	public static function guardar($consola, $disco, $nome, $por = '') {
 		$anterior = self::de($consola);
+		$caminho = Armazem::caminho('bios', $disco);
 
 		$stt = Con::ecta()->prepare(
 			"INSERT INTO `app_config` (`conf_chave`, `conf_valor`) VALUES (?, ?)
 			 ON DUPLICATE KEY UPDATE `conf_valor` = VALUES(`conf_valor`)"
 		);
-		$stt->execute(['bios_'.$consola, json_encode(['disco' => $disco, 'nome' => $nome])]);
+		$stt->execute(['bios_'.$consola, json_encode([
+			'disco'   => $disco,
+			'nome'    => $nome,
+			'tamanho' => ($caminho && is_file($caminho)) ? filesize($caminho) : 0,
+			'quando'  => date('Y-m-d H:i:s'),
+			'por'     => mb_substr((string)$por, 0, 150),
+		])]);
 
 		//a antiga só sai depois de a nova estar gravada
 		if($anterior && $anterior['disco'] !== $disco){

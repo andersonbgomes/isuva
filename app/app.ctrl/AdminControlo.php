@@ -367,7 +367,7 @@ class AdminControlo extends Acao {
 			if(is_string($r)){
 				$this->voltar('warning', 'BIOS', $r, 'admin/emulador');
 			}
-			Bios::guardar($consola, $r['disco'], $r['nome']);
+			Bios::guardar($consola, $r['disco'], $r['nome'], $this->ver->usuario['nome_us'] ?? '');
 			$this->voltar('success', 'BIOS', 'A BIOS de '.$c['nome'].' foi gravada ('.$r['nome'].').', 'admin/emulador');
 		}
 
@@ -393,7 +393,7 @@ class AdminControlo extends Acao {
 		if(is_string($r)){
 			$this->voltar('warning', 'BIOS', $r, 'admin/emulador');
 		}
-		Bios::guardar($consola, $r['disco'], $r['nome']);
+		Bios::guardar($consola, $r['disco'], $r['nome'], $this->ver->usuario['nome_us'] ?? '');
 		$this->voltar('success', 'BIOS', 'A BIOS de '.$c['nome'].' foi gravada ('.$r['nome'].').', 'admin/emulador');
 	}
 

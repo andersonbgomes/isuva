@@ -18,10 +18,15 @@ O endereço do EmulatorJS e as BIOS de cada consola.
 </form>
 
 <div class="cartao">
-	<h3>BIOS</h3>
+	<h3>BIOS padrão do site</h3>
 	<p class="texto-fraco">
-		A BIOS é o programa interno da consola. Tem direitos de autor, por isso não vem com o
-		site: envie a sua, uma por consola. O nome do ficheiro conta, porque o emulador procura-a
+		A BIOS que se envia aqui fica guardada <strong>no site</strong> e é a padrão dessa consola: serve para
+		todos os jogos e todos os jogadores, e os outros administradores veem-na aqui já instalada. Basta
+		enviá-la uma vez; para a trocar, envie outra por cima.
+	</p>
+	<p class="texto-fraco">
+		A BIOS é o programa interno da consola. Tem direitos de autor, por isso não vem dentro do
+		código do site: cada administrador envia a sua, uma por consola. O nome do ficheiro conta, porque o emulador procura-a
 		pelo nome. Pode enviar o <strong>.zip tal como o descarregou</strong>: na PS2, o site tira de lá a BIOS
 		principal; nas outras consolas o .zip fica inteiro, porque o emulador abre-o sozinho.
 		Mantenha o nome original (ex.: <code>scph5501.bin</code> na PS1,
@@ -32,7 +37,7 @@ O endereço do EmulatorJS e as BIOS de cada consola.
 	<div class="tabela-rola">
 	<table>
 		<thead>
-			<tr><th>Consola</th><th>Precisa?</th><th>Ficheiro</th><th></th></tr>
+			<tr><th>Consola</th><th>Precisa?</th><th>BIOS padrão</th><th></th></tr>
 		</thead>
 		<tbody>
 			<?php foreach ($this->ver->bios as $chave => $b): ?>
@@ -40,10 +45,17 @@ O endereço do EmulatorJS e as BIOS de cada consola.
 				<td><?=esc($b['consola']['nome'])?></td>
 				<td><?=$b['consola']['bios'] === 'obrigatoria' ? '<strong>Obrigatória</strong>' : 'Opcional'?></td>
 				<td>
-					<?php if($b['ficheiro']): ?>
-						<code><?=esc($b['ficheiro']['nome'])?></code>
+					<?php if($b['ficheiro']): $f = $b['ficheiro']; ?>
+						<span class="estado-ok">Instalada</span><br>
+						<code><?=esc($f['nome'])?></code>
+						<?php if(!empty($f['quando'])): ?>
+						<br><small class="texto-fraco">
+							<?=!empty($f['tamanho']) ? esc(Armazem::legivel($f['tamanho'])).' &middot; ' : ''?>enviada
+							<?=!empty($f['por']) ? 'por '.esc($f['por']).' ' : ''?>a <?=esc(data_pt($f['quando'], true))?>
+						</small>
+						<?php endif; ?>
 					<?php else: ?>
-						<span class="texto-fraco">Nenhuma</span>
+						<span class="<?=$b['consola']['bios'] === 'obrigatoria' ? 'estado-mal' : 'texto-fraco'?>">Nenhuma</span>
 					<?php endif; ?>
 				</td>
 				<td class="acoes">
@@ -52,7 +64,11 @@ O endereço do EmulatorJS e as BIOS de cada consola.
 						<input type="hidden" name="consola" value="<?=esc($chave)?>">
 						<input type="hidden" name="envio" value="">
 						<input type="file" name="bios" required aria-label="BIOS de <?=esc($b['consola']['nome'])?>">
+						<?php if($b['ficheiro']): ?>
+						<button type="submit" class="btn btn-claro" data-trocar="1">Trocar</button>
+						<?php else: ?>
 						<button type="submit" class="btn">Enviar</button>
+						<?php endif; ?>
 					</form>
 					<?php if($b['ficheiro']): ?>
 					<form method="post" action="<?=url_base('admin/apagarbios')?>" onsubmit="return confirm('Apagar esta BIOS?')">
@@ -83,6 +99,9 @@ document.querySelectorAll('.form-bios').forEach(function (form) {
 		if (form.dataset.pronto === '1' || !input.files[0]) { return; }
 		e.preventDefault();
 
+		//trocar a BIOS padrão muda-a para todos os jogadores: pergunta-se antes
+		if (botao.dataset.trocar && !confirm('Trocar a BIOS padrão desta consola? A actual é apagada, e a nova passa a valer para todos.')) { return; }
+
 		botao.disabled = true;
 		try {
 			var id = await enviarAosPedacos({
@@ -100,7 +119,7 @@ document.querySelectorAll('.form-bios').forEach(function (form) {
 		} catch (erro) {
 			alert(erro.message);
 			botao.disabled = false;
-			botao.textContent = 'Enviar';
+			botao.textContent = botao.dataset.trocar ? 'Trocar' : 'Enviar';
 		}
 	});
 });

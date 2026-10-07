@@ -59,7 +59,12 @@ $nomesTipo = ['sram' => 'Gravação do jogo', 'estado' => 'Estado'];
 			<?php endif; ?>
 
 			<div class="ficha-accoes">
+				<?php if(!$this->ver->conta && Consolas::precisaConta($j['consola_jg'])): ?>
+				<?php //PS2 e Sega CD: entrar primeiro, e voltar direito ao jogo ?>
+				<a class="btn btn-grande" href="<?=url_base('auth')?>?volta=<?=urlencode('jogar/ver/'.(int)$j['id_jg'])?>"><?=icone('jogar')?> Entrar para jogar</a>
+				<?php else: ?>
 				<a class="btn btn-grande" href="<?=url_base('jogar/ver/'.(int)$j['id_jg'])?>"><?=icone('jogar')?> Jogar agora</a>
+				<?php endif; ?>
 				<a class="btn btn-claro btn-grande" href="<?=url_base('como-usar/guia/'.$guia)?>"><?=icone('livro')?> Como jogar</a>
 				<?php if($this->e_admin()): ?>
 				<a class="btn btn-claro btn-grande" href="<?=url_base('admin/editar/'.(int)$j['id_jg'])?>">Editar</a>
@@ -89,7 +94,23 @@ $nomesTipo = ['sram' => 'Gravação do jogo', 'estado' => 'Estado'];
 
 	<div class="cartao">
 		<h3><?=icone('gravar')?> As suas gravações</h3>
-		<?php if($noServidor): $cartao = $this->ver->gravacoes['cartao']; ?>
+		<?php if($this->ver->gravacoes === null): ?>
+			<div class="linha-info"><?=icone('info')?>
+				<div>
+					<?php if(Consolas::precisaConta($j['consola_jg'])): ?>
+					Para jogar <?=esc($c['nome'])?> precisa de uma conta: é grátis, e o que gravar fica guardado nela.
+					<?php else: ?>
+					Pode jogar já, sem conta. Mas sem conta, o que gravar fica só neste browser: com uma conta (é grátis)
+					fica guardado e pode continuar em qualquer computador.
+					<?php endif; ?>
+				</div>
+			</div>
+			<div class="ficha-accoes" style="margin-top:14px">
+				<a class="btn" href="<?=url_base('registo')?>?volta=<?=urlencode(volta_actual())?>">Criar conta</a>
+				<?php if($this->ver->google): ?><a class="btn btn-google" style="margin-top:0" href="<?=url_base('auth/google')?>?volta=<?=urlencode(volta_actual())?>">Continuar com o Google</a><?php endif; ?>
+				<a class="btn btn-claro" href="<?=url_base('auth')?>?volta=<?=urlencode(volta_actual())?>">Entrar</a>
+			</div>
+		<?php elseif($noServidor): $cartao = $this->ver->gravacoes['cartao']; ?>
 			<div class="linha-info"><?=icone('info')?>
 				<div>Na <?=esc($c['nome'])?> grava-se no cartão de memória, dentro do jogo. O cartão é da sua conta e serve para todos os jogos desta consola.</div>
 			</div>
@@ -111,7 +132,7 @@ $nomesTipo = ['sram' => 'Gravação do jogo', 'estado' => 'Estado'];
 				<?php endforeach; ?>
 			<?php endif; ?>
 		<?php endif; ?>
-		<p class="ajuda"><a href="<?=url_base('gravacoes')?>">Ver todas as gravações</a></p>
+		<?php if($this->ver->gravacoes !== null): ?><p class="ajuda"><a href="<?=url_base('gravacoes')?>">Ver todas as gravações</a></p><?php endif; ?>
 	</div>
 </div>
 

@@ -77,7 +77,9 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 		nota.textContent = c.nota + ' Formatos: ' + c.ext.map(function (e) { return '.' + e; }).join(' ');
 		fich.setAttribute('accept', c.ext.map(function (e) { return '.' + e; }).join(','));
 
-		if (c.semBios) {
+		if (c.pedeConta) {
+			avisar('Esta consola precisa de uma conta (por causa da BIOS). Entre ou crie uma conta, é grátis.');
+		} else if (c.semBios) {
 			avisar('Esta consola precisa de uma BIOS, e o administrador ainda não a enviou. O jogo não vai arrancar.');
 		} else if (c.threads && !window.crossOriginIsolated) {
 			avisar('Este browser não permite correr esta consola (falta-lhe suporte a threads). Experimente o Chrome, o Edge ou o Firefox, actualizados.');
@@ -88,6 +90,11 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 		e.preventDefault();
 		var c = CONSOLAS[sel.value], f = fich.files[0];
 		if (!c || !f) { return; }
+
+		if (c.pedeConta) {
+			avisar('Esta consola precisa de uma conta (por causa da BIOS). Entre ou crie uma conta, é grátis.');
+			return;
+		}
 
 		//a mesma regra do servidor: é pela extensão que o emulador escolhe o que arrancar
 		var ext = f.name.split('.').pop().toLowerCase();

@@ -24,7 +24,7 @@ submeter este formulário com o browser de quem lá passasse.
 
 		<div class="marca-entrada"><?=icone('comando')?></div>
 		<h1 class="texto-centro" style="margin:0 0 4px"><?=esc(configura('tit'))?></h1>
-		<p class="texto-fraco texto-centro">Entre com a sua conta.</p>
+		<p class="texto-fraco texto-centro">Entre para guardar o seu progresso nos jogos.</p>
 
 		<?php if(!empty($_SESSION['txt'])): ?>
 		<div class="aviso aviso-<?=esc($_SESSION['tp'] ?? 'info')?>">
@@ -40,6 +40,8 @@ submeter este formulário com o browser de quem lá passasse.
 		</div>
 		<?php else: ?>
 
+		<?php include __DIR__.'/_google.phtml'; ?>
+
 		<form method="post" action="<?=url_base('auth/entrar')?>">
 			<?=csrf_field()?>
 
@@ -53,6 +55,11 @@ submeter este formulário com o browser de quem lá passasse.
 		</form>
 
 		<?php endif; ?>
+
+		<p class="texto-centro texto-fraco" style="margin:20px 0 0">
+			Ainda não tem conta? <a href="<?=url_base('registo')?>">Criar conta</a><br>
+			<a href="<?=url_base('jogos')?>">Continuar sem conta</a>
+		</p>
 	</div>
 </div>
 

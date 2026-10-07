@@ -140,7 +140,8 @@ aguenta muitos jogadores.
 | `/jogos/ver/7` | a tela do jogo 7: capa, descrição, jogar, controlos, gravações |
 | `/como-usar` | os guias, um por cartão (os de administração só para administradores) |
 | `/bios` | de que BIOS cada consola precisa e se o site já a tem (sem ficheiros para descarregar) |
-| `/utilizadores` | as contas: criar, activar e desactivar, dar acesso de administrador |
+| `/registo` | criar conta (qualquer pessoa) |
+| `/utilizadores` | as contas: activar e desactivar, dar acesso de administrador, entrar com o Google |
 | `/jogar/ver/7` | jogar o jogo 7 |
 | `/jogar/local` | jogar um ficheiro do próprio computador (não é enviado ao servidor) |
 | `/gravacoes` | as gravações da conta: ver, descarregar, apagar |
@@ -156,6 +157,29 @@ aguenta muitos jogadores.
 
 A lista, com os formatos aceites, está em `lib/jogos/Consolas.php`. A PS3
 ainda não entra: precisaria de uma máquina inteira por jogador.
+
+### Um site aberto: conta só para guardar
+
+Qualquer pessoa entra e joga **sem conta**: o catálogo, a tela dos jogos,
+as consolas de browser, o "Como usar" e a página BIOS são públicos
+(`Acao::SEM_SESSAO`). A conta serve para **guardar**:
+
+- **Sem conta**, o jogo grava no browser, como sempre. Quando grava (ou
+  quando se carrega em "Guardar estado"), aparece um convite para criar
+  conta. Quem a cria depois não perde nada: a gravação do browser passa
+  para a conta da próxima vez que abrir o jogo.
+- **Criar conta** (`/registo`): nome, e-mail e palavra-passe, e entra logo.
+  Contra robôs há um campo-armadilha e um limite de 3 contas por hora por
+  origem (o IP fica só como resumo, nunca em claro).
+- **Entrar com o Google:** o administrador põe o ID de cliente e o segredo
+  em **Contas → Entrar com o Google** (o ecrã explica onde os obter, e
+  mostra o endereço de volta a registar no Google). Sem eles, o botão não
+  aparece.
+- **Pedem conta:** gravar no servidor, a PS2 (cada jogador ocupa uma placa
+  gráfica) e o Sega CD (precisa da BIOS). As **BIOS só vão para quem tem
+  conta**: num site aberto, o ficheiro que o browser recebe ficava ao
+  alcance de qualquer visitante. Sem conta, o emulador usa a BIOS de
+  substituição que já traz.
 
 ### Adicionar jogos
 

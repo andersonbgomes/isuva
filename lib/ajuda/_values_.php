@@ -128,6 +128,26 @@ function loga(){
 	}
 }
 
+/*
+O caminho da página aberta (ex.: "jogos/ver/7"), para voltar a ela depois
+de entrar. Só o caminho dentro da aplicação, sem o domínio.
+*/
+function volta_actual(){
+	return trim((string)($_SERVER['PATH_INFO'] ?? ''), '/');
+}
+
+/*
+Um "volta" que veio de fora (?volta=...) é um sítio para onde se manda o
+browser -- e por isso só se aceita se for um caminho DESTA aplicação.
+Sem isto, um link "entrar?volta=//site-falso.com" mandava quem entrasse
+para outro site logo a seguir a pôr a palavra-passe (um redireccionamento
+aberto, o truque clássico do phishing).
+*/
+function volta_segura($v){
+	$v = trim((string)$v, '/');
+	return preg_match('#^[a-z0-9][a-z0-9\-/]{0,200}$#', $v) && strpos($v, '//') === false ? $v : '';
+}
+
 //o utilizador com sessão aberta, ou 0
 function utilizador_actual(){
 	return (int)($_SESSION['us_id'] ?? 0);

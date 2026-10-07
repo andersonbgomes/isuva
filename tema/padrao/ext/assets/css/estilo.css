@@ -670,3 +670,43 @@ body.palco {
 .palco-espera { text-align: center; }
 .palco-espera h2 { margin: 0 0 8px; font-size: 20px; }
 .palco-espera .palco-nota, .palco-escolha .palco-nota { padding: 0; margin: 12px 0 0; }
+
+/* =========================================================================
+   Contas: Google, criar conta, e o convite a quem joga sem conta
+   ========================================================================= */
+
+.btn-google { background: #fff; color: #1f1f1f; margin-top: 8px; }
+.btn-google:hover { background: #e4e4e7; color: #1f1f1f; }
+
+.separador { display: flex; align-items: center; gap: 12px; margin: 18px 0 2px; color: var(--mais-fraco); font-size: 13px; }
+.separador::before, .separador::after { content: ""; flex: 1; height: 1px; background: var(--painel-forte); }
+
+/* a armadilha dos robôs: fora do ecrã, e não display:none (há robôs que
+   saltam os campos escondidos assim) */
+.armadilha { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.topo-entrar { display: flex; gap: 8px; flex: none; }
+@media (max-width: 480px) { .topo-entrar .btn-claro { display: none; } }
+
+/* o convite para criar conta, por cima do jogo -- em cima, e não em baixo:
+   em baixo tapava a barra do emulador (pausa, som, ecrã inteiro) */
+.convite {
+	position: fixed; left: 50%; top: 76px; z-index: 100;
+	transform: translateX(-50%);
+	width: calc(100% - 32px); max-width: 560px;
+	display: flex; gap: 14px; align-items: flex-start;
+	padding: 18px;
+	border-radius: 18px;
+	background: rgba(24, 24, 27, .97);
+	border: 1px solid rgba(20, 184, 166, .45);
+	box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+	animation: convite-entra .25s ease-out;
+}
+@keyframes convite-entra { from { opacity: 0; transform: translate(-50%, -12px); } }
+.convite > .icone { color: var(--cor-clara); width: 26px; height: 26px; margin-top: 2px; }
+.convite strong { color: #fff; display: block; margin-bottom: 4px; }
+.convite p { margin: 0 0 12px; color: var(--fraco); font-size: 14px; }
+.convite-botoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.convite-botoes .btn-google { margin-top: 0; }
+.convite-fechar { margin-left: auto; background: none; border: 0; color: var(--mais-fraco); cursor: pointer; padding: 2px; }
+.convite-fechar:hover { color: #fff; }

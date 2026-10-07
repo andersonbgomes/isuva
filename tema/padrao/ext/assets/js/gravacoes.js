@@ -36,6 +36,9 @@ passam por estes eventos: esses estados continuam só no browser.
 	var C = window.ISUVA_GRAVACOES;
 	if (!C) { return; }
 
+	//sem conta: o jogo corre e grava no browser, mas nada sobe -- ver visitante()
+	if (!C.conta) { visitante(C); return; }
+
 	var pronto = false;        //a gravação do servidor já foi aplicada
 	var ultimaSram = null;     //o resumo da última sram que o servidor tem
 	var aSubir = false;
@@ -210,3 +213,100 @@ passam por estes eventos: esses estados continuam só no browser.
 		}
 	});
 })();
+
+/*
+QUEM JOGA SEM CONTA.
+
+O jogo corre e grava como sempre -- no browser (o EmulatorJS guarda a
+gravação do jogo no IndexedDB). O que não há é servidor: por isso, quando o
+jogo grava pela primeira vez, ou quando a pessoa carrega em "Guardar
+estado", aparece o convite para criar conta (ou entrar, ou o Google).
+
+Não se perde nada por criar a conta depois: na primeira vez que abrir o
+jogo já com conta, a gravação que ficou no browser sobe sozinha (ver
+aoArrancar, acima: "o servidor ainda não tem nenhuma mas o browser tem").
+
+O convite aparece UMA vez por página, e se for fechado não volta: lembrar
+uma vez é ajudar, lembrar a cada minuto é afastar quem só quer jogar.
+*/
+function visitante(C) {
+	var mostrado = false;
+	var inicial = null;      //a gravação que o browser tinha quando o jogo arrancou
+
+	function emu() { return window.EJS_emulator; }
+
+	async function resumo(bytes) {
+		var h = await crypto.subtle.digest('SHA-256', bytes);
+		return Array.from(new Uint8Array(h)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+	}
+
+	function botao(texto, url, classe) {
+		var a = document.createElement('a');
+		a.className = 'btn ' + (classe || '');
+		a.href = url;
+		a.textContent = texto;
+		return a;
+	}
+
+	function convite(motivo) {
+		if (mostrado) { return; }
+		mostrado = true;
+
+		var caixa = document.createElement('div');
+		caixa.className = 'convite';
+		caixa.setAttribute('role', 'dialog');
+		caixa.setAttribute('aria-label', 'Guardar o progresso');
+		caixa.innerHTML = '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>';
+
+		var corpo = document.createElement('div');
+		var titulo = document.createElement('strong');
+		titulo.textContent = 'Guarde o seu progresso';
+		var texto = document.createElement('p');
+		texto.textContent = motivo === 'estado'
+			? 'Para guardar estados precisa de uma conta. É grátis e demora um minuto: o jogo continua aqui.'
+			: 'O jogo gravou, mas sem conta a gravação fica só neste browser. Crie uma conta (é grátis) para a guardar e continuar em qualquer computador.';
+
+		var botoes = document.createElement('div');
+		botoes.className = 'convite-botoes';
+		botoes.appendChild(botao('Criar conta', C.registo));
+		if (C.google) { botoes.appendChild(botao('Continuar com o Google', C.google, 'btn-google')); }
+		botoes.appendChild(botao('Entrar', C.entrar, 'btn-claro'));
+
+		corpo.appendChild(titulo);
+		corpo.appendChild(texto);
+		corpo.appendChild(botoes);
+		caixa.appendChild(corpo);
+
+		var fechar = document.createElement('button');
+		fechar.type = 'button';
+		fechar.className = 'convite-fechar';
+		fechar.setAttribute('aria-label', 'Fechar');
+		fechar.textContent = '\u2715';
+		fechar.addEventListener('click', function () { caixa.remove(); });
+		caixa.appendChild(fechar);
+
+		document.body.appendChild(caixa);
+	}
+
+	//os botões de estado: sem conta não guardam no servidor -- explicam porquê
+	window.EJS_onSaveState = function () { convite('estado'); };
+	window.EJS_onLoadState = function () { convite('estado'); };
+
+	/*
+	A gravação do jogo: o EmulatorJS avisa de minuto a minuto, mesmo quando
+	nada mudou. O convite só aparece quando a gravação é DIFERENTE da que
+	havia ao arrancar -- isto é, quando a pessoa gravou mesmo alguma coisa.
+	*/
+	var antes = window.EJS_onGameStart;
+	window.EJS_onGameStart = function () {
+		if (typeof antes === 'function') { antes.apply(this, arguments); }
+		var local = emu().gameManager.getSaveFile(false);
+		(local && local.length ? resumo(local) : Promise.resolve('')).then(function (h) { inicial = h; });
+
+		emu().on('saveSaveFiles', function (bytes) {
+			if (!bytes || !bytes.length || inicial === null) { return; }
+			resumo(bytes).then(function (h) { if (h !== inicial) { convite('sram'); } });
+		});
+	};
+}
+

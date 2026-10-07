@@ -23,6 +23,7 @@ página para página nota-se logo, e lê-se como remendo.
 					if(acao !== 'index'){
 						?><a class="btn btn-claro" href="<?=url_base('utilizadores')?>">Voltar à lista</a><?php
 					} else {
+						?><a class="btn btn-claro" href="<?=url_base('utilizadores/google')?>">Entrar com o Google</a><?php
 						?><a class="btn" href="<?=url_base('utilizadores/novo')?>"><?=icone('mais')?> Nova conta</a><?php
 					}
 					break;

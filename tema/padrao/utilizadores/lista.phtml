@@ -10,7 +10,8 @@ As contas: quem são, se são administradores, se estão activas.
 		<tbody>
 			<?php foreach ($this->ver->contas as $c): ?>
 			<tr>
-				<td><strong><?=esc($c['nome_us'])?></strong><?=(int)$c['id_us'] === utilizador_actual() ? ' <span class="texto-fraco">(você)</span>' : ''?></td>
+				<td><strong><?=esc($c['nome_us'])?></strong><?=(int)$c['id_us'] === utilizador_actual() ? ' <span class="texto-fraco">(você)</span>' : ''?>
+				<?php if(!empty($c['google_us'])): ?> <span class="etiqueta etiqueta-fraca">Google</span><?php endif; ?></td>
 				<td><?=esc($c['email_us'])?></td>
 				<td><?=(int)$c['nivl_us'] === 1 ? '<span class="etiqueta">Administrador</span>' : '<span class="texto-fraco">Jogador</span>'?></td>
 				<td><?=(int)$c['stto_us'] === 1 ? '<span class="estado-ok">Activa</span>' : '<span class="estado-mal">Desactivada</span>'?></td>

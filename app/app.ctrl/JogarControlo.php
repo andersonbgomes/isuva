@@ -48,6 +48,12 @@ class JogarControlo extends Acao {
 				'Este jogo é de uma consola que o site já não suporta. Edite-o no painel.', 'jogos');
 		}
 
+		//PS2 e Sega CD pedem conta (ver Consolas::precisaConta); quem não tem
+		//vai entrar, e volta aqui
+		if(Consolas::precisaConta($jogo['consola_jg'])){
+			$this->so_conta(false, 'jogar/ver/'.(int)$jogo['id_jg']);
+		}
+
 		$this->ver->jogo    = $jogo;
 		$this->ver->consola = $consola;
 
@@ -79,6 +85,15 @@ class JogarControlo extends Acao {
 			'iniciar' => url_base('gravacoes/iniciar'),
 			'pedaco'  => url_base('gravacoes/pedaco'),
 			'guardar' => url_base('gravacoes/guardar'),
+			/*
+			Sem conta, o jogo corre na mesma e grava no browser; o que muda é
+			que nada sobe para o servidor, e o gravacoes.js mostra o convite
+			para criar conta quando o jogo grava (ou quando se guarda um estado).
+			*/
+			'conta'   => $this->tem_conta(),
+			'registo' => url_base('registo').'?volta='.urlencode('jogar/ver/'.(int)$jogo['id_jg']),
+			'entrar'  => url_base('auth').'?volta='.urlencode('jogar/ver/'.(int)$jogo['id_jg']),
+			'google'  => Conta::googleLigado() ? url_base('auth/google').'?volta='.urlencode('jogar/ver/'.(int)$jogo['id_jg']) : '',
 		];
 
 		$this->renderizar_solto('ver');
@@ -102,6 +117,8 @@ class JogarControlo extends Acao {
 				'ext'  => Consolas::extensoes($chave),
 				'nota' => $c['nota'],
 				'semBios' => $c['bios'] === 'obrigatoria' && empty(Bios::de($chave)),
+				//sem conta, esta consola não arranca (não leva a BIOS)
+				'pedeConta' => !$this->tem_conta() && Consolas::precisaConta($chave),
 			];
 		}
 
@@ -121,6 +138,7 @@ class JogarControlo extends Acao {
 	ser disparado por um pré-carregamento do browser ou por um link.
 	*/
 	public function pedir() {
+		$this->so_conta(true);
 		$this->soPostJson();
 
 		$jogo = $this->jogo(id);
@@ -141,6 +159,7 @@ class JogarControlo extends Acao {
 	sinal de vida da página: sem ele, a sessão termina (Fila::SEM_SINAL).
 	*/
 	public function estado() {
+		$this->so_conta(true);
 		$this->soPostJson();
 		$s = $this->minhaSessao(id);
 		$this->json(Fila::consultar($s));
@@ -148,6 +167,7 @@ class JogarControlo extends Acao {
 
 	//POST /jogar/terminar/<id da sessão>: o jogador saiu, o lugar liberta-se já
 	public function terminar() {
+		$this->so_conta(true);
 		$this->soPostJson();
 		$s = $this->minhaSessao(id);
 		Fila::terminar($s, 'O jogador terminou a sessão.');
@@ -156,7 +176,14 @@ class JogarControlo extends Acao {
 
 	public function ficheiro() {
 		$jogo = $this->jogo(id);
-		if(empty($jogo) || (!$this->e_admin() && (int)$jogo['stto_jg'] !== 1)){
+		/*
+		Os jogos de servidor (PS2) NUNCA saem por aqui: o browser não os
+		usa -- é o nó que os copia, pelo NoControlo, com endereço assinado.
+		Servi-los aqui era pôr as ISOs a descarregar a quem soubesse o número.
+		*/
+		if(empty($jogo) || (!$this->e_admin() && (int)$jogo['stto_jg'] !== 1)
+		   || Consolas::noServidor($jogo['consola_jg'])
+		   || (Consolas::precisaConta($jogo['consola_jg']) && !$this->tem_conta())){
 			http_response_code(404);
 			exit;
 		}
@@ -184,6 +211,16 @@ class JogarControlo extends Acao {
 	}
 
 	public function bios() {
+		/*
+		A BIOS só vai para quem tem conta. O emulador corre no browser, por
+		isso o ficheiro tem de chegar lá -- e num site aberto a qualquer
+		visitante isso era pô-la a descarregar a toda a gente. Sem conta, o
+		emulador usa a BIOS de substituição que já traz.
+		*/
+		if(!$this->tem_conta()){
+			http_response_code(404);
+			exit;
+		}
 		$bios = Bios::de(id);
 		if(empty($bios)){
 			http_response_code(404);
@@ -247,7 +284,8 @@ class JogarControlo extends Acao {
 		if(!preg_match('#^https?://#i', $dados)){ $dados = url_base(ltrim($dados, '/')); }
 		$dados = rtrim($dados, '/').'/';
 
-		$bios = Bios::de($chave);
+		//a BIOS só para quem tem conta (ver bios() acima)
+		$bios = $this->tem_conta() ? Bios::de($chave) : [];
 
 		return [
 			'core'      => $c['nucleo'],

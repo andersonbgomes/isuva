@@ -71,6 +71,16 @@ class JogarControlo extends Acao {
 		$this->ver->emu['gameName'] = $jogo['titulo_jg'];
 		$this->ver->emu['gameID']   = (int)$jogo['id_jg'];
 
+		//as gravações desta conta neste jogo vivem no servidor (gravacoes.js)
+		$this->ver->gravacoes = [
+			'jogo'    => (int)$jogo['id_jg'],
+			'csrf'    => csrf_token(),
+			'ler'     => url_base('gravacoes/ler/'.(int)$jogo['id_jg']),
+			'iniciar' => url_base('gravacoes/iniciar'),
+			'pedaco'  => url_base('gravacoes/pedaco'),
+			'guardar' => url_base('gravacoes/guardar'),
+		];
+
 		$this->renderizar_solto('ver');
 	}
 

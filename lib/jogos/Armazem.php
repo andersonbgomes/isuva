@@ -2,11 +2,12 @@
 /*
 ONDE FICAM OS FICHEIROS DOS JOGOS, E COMO SAEM DE LÁ.
 
-Três pastas debaixo de armazem/ (ver PASTA_ARMAZEM em lib/define.php):
+As pastas debaixo de armazem/ (ver PASTA_ARMAZEM em lib/define.php):
 
     jogos/    as ROMs e as ISOs
     capas/    as imagens do catálogo
     bios/     as BIOS de cada consola
+    gravacoes/ as gravações de cada conta (ver Gravacoes.php)
     envios/   os pedaços de um envio que ainda não acabou
 
 NENHUM FICHEIRO DAQUI É SERVIDO DIRECTAMENTE. O armazem/.htaccess fecha a
@@ -65,6 +66,15 @@ class Armazem {
 	*/
 	public static function nomeLimpo($nome) {
 		$nome = basename(str_replace('\\', '/', (string)$nome));
+		//os acentos passam a letra simples ("Ecrã" -> "Ecra"), em vez de virarem "_"
+		$nome = strtr($nome, [
+			'á'=>'a','à'=>'a','â'=>'a','ã'=>'a','ä'=>'a','é'=>'e','è'=>'e','ê'=>'e','ë'=>'e',
+			'í'=>'i','ì'=>'i','î'=>'i','ï'=>'i','ó'=>'o','ò'=>'o','ô'=>'o','õ'=>'o','ö'=>'o',
+			'ú'=>'u','ù'=>'u','û'=>'u','ü'=>'u','ç'=>'c','ñ'=>'n',
+			'Á'=>'A','À'=>'A','Â'=>'A','Ã'=>'A','Ä'=>'A','É'=>'E','È'=>'E','Ê'=>'E','Ë'=>'E',
+			'Í'=>'I','Ì'=>'I','Î'=>'I','Ï'=>'I','Ó'=>'O','Ò'=>'O','Ô'=>'O','Õ'=>'O','Ö'=>'O',
+			'Ú'=>'U','Ù'=>'U','Û'=>'U','Ü'=>'U','Ç'=>'C','Ñ'=>'N',
+		]);
 		$nome = preg_replace('/[^A-Za-z0-9 ._\-()\[\]]/', '_', $nome);
 		$nome = trim(preg_replace('/\s+/', ' ', $nome), ' .');
 		if(strlen($nome) > 180){
@@ -208,6 +218,31 @@ class Armazem {
 	}
 
 	/*
+	O pedido de um pedaço, tal como chega do envio.js: o identificador e a
+	posição nos cabeçalhos, os bytes no corpo. Devolve [código HTTP, JSON]
+	-- é a mesma resposta para o painel (jogos, BIOS) e para as gravações
+	de cada conta, por isso vive aqui e não em cada controlador.
+	*/
+	public static function receberPedaco() {
+		$id = (string)($_SERVER['HTTP_X_ENVIO'] ?? '');
+		if(!self::envioValido($id)){
+			return [404, ['erro' => 'Esse envio não existe. Comece outra vez.']];
+		}
+
+		$r = self::envioPedaco($id, (int)($_SERVER['HTTP_X_POSICAO'] ?? -1), 'php://input');
+
+		//"pos:N" é o servidor a dizer onde o envio está, para o browser
+		//continuar dali (um pedaço repetido depois de uma falha de rede)
+		if(is_string($r) && strpos($r, 'pos:') === 0){
+			return [409, ['posicao' => (int)substr($r, 4)]];
+		}
+		if(is_string($r)){
+			return [422, ['erro' => $r]];
+		}
+		return [200, ['posicao' => $r]];
+	}
+
+	/*
 	Um envio que acabou passa para a pasta de destino com um nome novo.
 
 	Só se estiver COMPLETO: um envio interrompido a meio não pode virar
@@ -266,7 +301,13 @@ class Armazem {
 	enquanto o pedido dura, e uma ISO a descarregar durante minutos
 	deixava o utilizador sem conseguir abrir mais nenhuma página do site.
 	*/
-	public static function servir($caminho, $nomeDownload, $tipo = 'application/octet-stream') {
+	/*
+	$cache = false para o que MUDA debaixo do mesmo endereço (as gravações):
+	com cache, o browser podia devolver a gravação de ontem a quem acabou de
+	gravar hoje -- e o jogo carregava-a por cima.
+	*/
+	//$anexo = true pede ao browser para guardar em vez de abrir
+	public static function servir($caminho, $nomeDownload, $tipo = 'application/octet-stream', $cache = true, $anexo = false) {
 		session_write_close();
 
 		if($caminho === null || !is_file($caminho)){
@@ -298,10 +339,10 @@ class Armazem {
 		header('Content-Type: '.$tipo);
 		header('Content-Length: '.($fim - $inicio + 1));
 		header('Accept-Ranges: bytes');
-		header('Content-Disposition: inline; filename="'.str_replace('"', '', $nomeDownload).'"');
+		header('Content-Disposition: '.($anexo ? 'attachment' : 'inline').'; filename="'.str_replace('"', '', $nomeDownload).'"');
 		header('X-Content-Type-Options: nosniff');
 		//"private": cada um guarda a sua cópia, mas nenhum proxy a partilha
-		header('Cache-Control: private, max-age=86400');
+		header($cache ? 'Cache-Control: private, max-age=86400' : 'Cache-Control: no-store');
 
 		/*
 		Esta resposta é pedida por páginas com Cross-Origin-Embedder-Policy

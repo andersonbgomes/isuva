@@ -277,6 +277,9 @@ class Fila {
 				'url'     => Agente::urlFicheiro($no, $jogo),
 			],
 			'bios' => $bios ? ['nome' => $bios['nome'], 'url' => Agente::urlBios($no, $jogo['consola_jg'], $bios)] : null,
+			//o cartão de memória do jogador: o nó lê-o daqui e devolve-o
+			//no fim, para a gravação seguir a conta para qualquer nó
+			'cartao' => ['url' => Agente::urlCartao($no, $s['us_ss'], $jogo['consola_jg'])],
 		];
 	}
 

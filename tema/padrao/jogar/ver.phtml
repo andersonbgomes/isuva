@@ -40,7 +40,8 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 
 <p class="palco-nota">
 	<?=esc($this->ver->consola['nota'])?>
-	O jogo corre no seu browser. As gravações ficam guardadas neste browser.
+	O jogo corre no seu browser. As gravações ficam guardadas na sua conta, no servidor:
+	pode continuar noutro computador.
 	Os controlos (teclado ou comando) mudam-se no ícone de comando, na barra do emulador.
 </p>
 
@@ -70,8 +71,20 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 	window.EJS_color      = '#3b5de7';
 	if (cfg.biosUrl) { window.EJS_biosUrl = cfg.biosUrl; }
 	if (cfg.threads) { window.EJS_threads = true; }
+
+	/*
+	A gravação do jogo de minuto a minuto (o EmulatorJS vem com 5): é
+	esse o ritmo a que ela sobe para o servidor (gravacoes.js), e o máximo
+	que se perde se o computador se desligar a meio.
+	*/
+	window.EJS_defaultOptions = { 'save-save-interval': '60' };
+
+	window.ISUVA_GRAVACOES = <?=json_encode($this->ver->gravacoes, $JSON)?>;
 })();
 </script>
+<!-- antes do loader.js: o loader só liga os EJS_on* que já existirem -->
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/envio.js')?>"></script>
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/gravacoes.js')?>"></script>
 <script src="<?=esc($emu['pathtodata'])?>loader.js"></script>
 </body>
 </html>

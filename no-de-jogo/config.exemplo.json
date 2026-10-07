@@ -7,6 +7,7 @@
   "cache_max_gb": 200,
   "cartoes": "/var/lib/isuva/cartoes",
   "sem_sinal": 300,
+  "devolver_cartao": 300,
   "duracao_max": 14400,
   "motor": "docker",
   "docker": {

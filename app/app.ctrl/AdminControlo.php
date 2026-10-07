@@ -130,22 +130,8 @@ class AdminControlo extends Acao {
 			$this->json(['erro' => 'A sessão expirou. Recarregue a página.'], 403);
 		}
 
-		$id = (string)($_SERVER['HTTP_X_ENVIO'] ?? '');
-		if(!Armazem::envioValido($id)){
-			$this->json(['erro' => 'Esse envio não existe. Comece outra vez.'], 404);
-		}
-
-		$r = Armazem::envioPedaco($id, (int)($_SERVER['HTTP_X_POSICAO'] ?? -1), 'php://input');
-
-		//"pos:N" é o servidor a dizer onde o envio está, para o browser
-		//continuar dali (um pedaço repetido depois de uma falha de rede)
-		if(is_string($r) && strpos($r, 'pos:') === 0){
-			$this->json(['posicao' => (int)substr($r, 4)], 409);
-		}
-		if(is_string($r)){
-			$this->json(['erro' => $r], 422);
-		}
-		$this->json(['posicao' => $r]);
+		list($codigo, $dados) = Armazem::receberPedaco();
+		$this->json($dados, $codigo);
 	}
 
 

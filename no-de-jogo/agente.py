@@ -31,6 +31,7 @@ COMO SE CORRE
 (ver config.exemplo.json, e o LEIA-ME.md para a instalação toda)
 """
 
+import gzip
 import hashlib
 import hmac
 import http.cookies
@@ -77,6 +78,7 @@ PADROES = {
     "cache_max_gb": 200,
     "cartoes": "/var/lib/isuva/cartoes",
     "sem_sinal": 300,               # segundos sem sinal do site até libertar o lugar
+    "devolver_cartao": 300,         # de quanto em quanto tempo o cartão volta ao site durante o jogo
     "duracao_max": 4 * 3600,        # nenhuma sessão passa disto
     "arranque_max": 180,            # segundos para o contentor responder
     "motor": "docker",              # docker | simulado (para testes, sem GPU)
@@ -143,6 +145,11 @@ class Sessao:
         self.inicio = time.time()
         self.vivo = time.time()
         self.processo = None            # só no motor simulado
+        # o cartão de memória da conta: lido do site ao arrancar, devolvido
+        # no fim e de devolver_cartao em devolver_cartao segundos
+        self.cartao = dados.get("cartao") or None
+        self.cartao_lido = False        # só se devolve um cartão que se leu primeiro
+        self.cartao_marca = None        # (mtime, tamanho) da última devolução
 
     def activa(self):
         return self.estado in ("a_preparar", "pronta")
@@ -238,6 +245,7 @@ class No:
         """Copia o jogo e a BIOS para a cache, arranca o motor e espera que responda."""
         try:
             bios = self.trazer_bios(s)
+            self.trazer_cartao(s)
             jogo = self.trazer_jogo(s)
             if not s.activa():
                 return
@@ -332,6 +340,101 @@ class No:
 
         if livre_disco < preciso:
             raise RuntimeError("Não há espaço em disco no servidor de jogo para este jogo.")
+
+    # ---------------------------------------------------------------- cartão de memória
+
+    def caminho_cartao(self, s):
+        """O cartão do jogador neste nó (a pasta é montada em /cartoes no contentor)."""
+        pasta = os.path.join(self.cfg["cartoes"], str(s.utilizador))
+        os.makedirs(pasta, exist_ok=True)
+        return os.path.join(pasta, "Mcd001.ps2")
+
+    def trazer_cartao(self, s):
+        """
+        O cartão de memória da CONTA, lido do site antes de a consola
+        arrancar. É o que faz a gravação seguir a pessoa para qualquer nó.
+
+        Se o site não responder, a sessão FALHA em vez de arrancar com o
+        cartão que este nó tiver: esse pode ser velho, e no fim da sessão
+        seria devolvido por cima do bom.
+        """
+        if not s.cartao:
+            return
+        destino = self.caminho_cartao(s)
+        s.mensagem = "A trazer o seu cartão de memória..."
+        with self.trava(destino):
+            # Uma sessão anterior não conseguiu devolver o cartão (o site
+            # estava em baixo): o deste nó é o mais recente. Vai primeiro
+            # para o site, e só depois se lê -- senão o velho vinha por cima.
+            if os.path.exists(destino + ".pendente"):
+                if not self.enviar_cartao(s, destino):
+                    raise RuntimeError("O seu cartão de memória ainda não voltou ao site. Tente daqui a pouco.")
+                os.remove(destino + ".pendente")
+            try:
+                with urllib.request.urlopen(urllib.request.Request(s.cartao["url"], headers={"User-Agent": "isuva-agente/" + VERSAO}), timeout=30) as r:
+                    dados = r.read()
+            except urllib.error.HTTPError as e:
+                if e.code != 404:
+                    raise RuntimeError("Não foi possível ler o seu cartão de memória (%d)." % e.code)
+                dados = None    # a conta ainda não tem cartão: fica o deste nó, se houver
+            except OSError as e:
+                raise RuntimeError("Não foi possível ler o seu cartão de memória: %s" % e)
+
+            if dados:
+                # comprimido pelo devolver_cartao (o site guarda os bytes tal e qual)
+                if dados[:2] == b"\x1f\x8b":
+                    dados = gzip.decompress(dados)
+                with open(destino + ".novo", "wb") as f:
+                    f.write(dados)
+                os.replace(destino + ".novo", destino)
+            s.cartao_lido = True
+            if os.path.exists(destino):
+                s.cartao_marca = (os.path.getmtime(destino), os.path.getsize(destino))
+
+    def devolver_cartao(self, s, final):
+        """
+        Manda o cartão de volta ao site, comprimido (um cartão de PS2 tem
+        8 MB, quase todos zeros: comprimido fica em dezenas de KB).
+
+        Só se foi lido no arranque (senão podia ir um cartão velho por cima
+        do da conta) e só se mudou desde a última vez. A cópia é feita para
+        a memória primeiro: durante o jogo o PCSX2 pode estar a escrever.
+        """
+        if not s.cartao or not s.cartao_lido:
+            return
+        destino = self.caminho_cartao(s)
+        with self.trava(destino):
+            if not os.path.exists(destino):
+                return
+            marca = (os.path.getmtime(destino), os.path.getsize(destino))
+            if marca == s.cartao_marca:
+                return
+            if self.enviar_cartao(s, destino, 2 if final else 1):
+                s.cartao_marca = marca
+            elif final:
+                # fica marcado: a próxima sessão desta conta neste nó manda-o
+                # antes de ler o do site (ver trazer_cartao)
+                open(destino + ".pendente", "w").close()
+
+    def enviar_cartao(self, s, destino, tentativas=2):
+        """
+        O PUT do cartão, comprimido. Poucas tentativas e curtas: no fim da
+        sessão isto corre DENTRO do pedido de terminar do site, que desiste
+        ao fim de 15 s.
+        """
+        with open(destino, "rb") as f:
+            dados = gzip.compress(f.read(), compresslevel=6)
+        for _ in range(tentativas):
+            try:
+                pedido = urllib.request.Request(s.cartao["url"], data=dados, method="PUT", headers={
+                    "Content-Type": "application/octet-stream", "User-Agent": "isuva-agente/" + VERSAO})
+                urllib.request.urlopen(pedido, timeout=10).close()
+                log.info("sessão %d: cartão devolvido ao site (%d bytes)", s.id, len(dados))
+                return True
+            except (urllib.error.HTTPError, OSError) as e:
+                log.warning("sessão %d: o cartão não voltou ao site (%s)", s.id, e)
+                time.sleep(1)
+        return False
 
     def esperar_resposta(self, s):
         """O contentor arrancou quando a porta dele responde a HTTP."""
@@ -435,6 +538,13 @@ class No:
         self.motor_parar(s)
         self.libertar_cache()
         log.info("sessão %d: terminada (%s)", s.id, motivo)
+        # O contentor já parou, por isso o PCSX2 já escreveu o cartão todo.
+        # A devolução é feita AQUI, antes de responder ao site, e não numa
+        # thread: quem termina um jogo e começa outro (aqui ou noutro nó)
+        # faz o site pedir a sessão nova logo a seguir a esta resposta -- e
+        # a sessão nova lê o cartão do site. Com uma thread, podia lê-lo
+        # antes de este chegar, e o progresso desta sessão perdia-se.
+        self.devolver_cartao(s, True)
 
     def libertar_cache(self):
         with self.lock:
@@ -459,6 +569,9 @@ class No:
             with self.lock:
                 lista = list(self.sessoes.values())
             for s in lista:
+                if s.estado == "pronta" and agora - getattr(s, "_devolvido", s.inicio) > float(self.cfg["devolver_cartao"]):
+                    s._devolvido = agora
+                    threading.Thread(target=self.devolver_cartao, args=(s, False), daemon=True).start()
                 if s.activa() and agora - s.vivo > float(self.cfg["sem_sinal"]):
                     self.terminar(s, "Sem sinal do site.")
                 elif s.activa() and agora - s.inicio > float(self.cfg["duracao_max"]):

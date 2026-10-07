@@ -36,6 +36,7 @@ class Agente {
 	//quanto tempo um endereço de ficheiro dado ao nó continua a valer:
 	//chega para copiar uma ISO de 8 GB numa ligação lenta, com folga
 	const PRAZO_FICHEIRO = 6 * 3600;
+	const PRAZO_CARTAO   = 8 * 3600;
 
 	//------------------------------------------------------------------
 	// Os pedidos
@@ -143,8 +144,20 @@ class Agente {
 		return self::urlAssinada($no, 'bios', $consola, $bios['nome']);
 	}
 
-	private static function urlAssinada($no, $tipo, $alvo, $nome) {
-		$prazo = time() + self::PRAZO_FICHEIRO;
+	/*
+	O cartão de memória da PS2 de um jogador: o nó lê-o (GET) ao arrancar
+	a sessão e devolve-o (PUT) ao terminar -- é assim que a gravação segue
+	a conta para qualquer nó. O mesmo endereço serve os dois.
+
+	Prazo mais longo do que o dos ficheiros: a devolução acontece no FIM da
+	sessão, que pode durar até ao duracao_max do agente (4 horas).
+	*/
+	public static function urlCartao($no, $idUtilizador, $consola) {
+		return self::urlAssinada($no, 'cartao', (int)$idUtilizador.'-'.$consola, 'cartao', self::PRAZO_CARTAO);
+	}
+
+	private static function urlAssinada($no, $tipo, $alvo, $nome, $duracao = self::PRAZO_FICHEIRO) {
+		$prazo = time() + $duracao;
 		$sig   = self::assinaturaFicheiro($no['segredo_no'], $tipo, $alvo, $prazo);
 		return url_base('no/'.$tipo.'/'.rawurlencode((string)$alvo))
 			.'?no='.(int)$no['id_no'].'&prazo='.$prazo.'&sig='.$sig.'&nome='.rawurlencode($nome);

@@ -4,6 +4,7 @@ O QUE O NÓ DE JOGO DESCARREGA DAQUI: o ficheiro do jogo e a BIOS.
 
     /no/ficheiro/<id do jogo>?no=..&prazo=..&sig=..&nome=..
     /no/bios/<consola>?no=..&prazo=..&sig=..&nome=..
+    /no/cartao/<utilizador>-<consola>?no=..&prazo=..&sig=..   (GET e PUT)
 
 SEM SESSÃO DE UTILIZADOR (está em Acao::SEM_SESSAO): quem pede é o agente
 do nó, uma máquina, que não entra com e-mail e palavra-passe. Em troca, a
@@ -47,6 +48,75 @@ class NoControlo extends Acao {
 		if(!$bios){ $this->negar(); }
 
 		Armazem::servir(Armazem::caminho('bios', $bios['disco']), $bios['nome']);
+	}
+
+	/*
+	/no/cartao/<utilizador>-<consola>: o cartão de memória da PS2 de um
+	jogador. GET devolve-o (404 se ainda não há), PUT guarda-o.
+
+	PUT e não POST de propósito: o post_max_size do PHP (8 MB em quase
+	todo o lado) não se aplica a um PUT, e um cartão de PS2 tem 8 MB. O
+	corpo lê-se do php://input aos bocados, com o limite de
+	Gravacoes::MAX['cartao'] contado aqui.
+	*/
+	public function cartao() {
+		$alvo = (string)id;
+		$this->validar('cartao', $alvo);
+
+		if(!preg_match('/^(\d+)-([A-Za-z0-9]+)$/', $alvo, $m)){ $this->negar(); }
+		$idUtilizador = (int)$m[1];
+		$k = Gravacoes::chave('cartao', [], $m[2], 0);
+		if(is_string($k)){ $this->negar(); }
+
+		if($_SERVER['REQUEST_METHOD'] === 'PUT'){
+			$this->receberCartao($idUtilizador, $k);
+		}
+
+		$g = Gravacoes::pegar($idUtilizador, $k);
+		if(!$g){
+			http_response_code(404);
+			exit;
+		}
+		Armazem::servir(Armazem::caminho('gravacoes', $g['ficheiro_gv']), 'cartao.bin', 'application/octet-stream', false);
+	}
+
+	private function receberCartao($idUtilizador, $k) {
+		$disco = Armazem::nomeNovo('cartao.bin');
+		$destino = Armazem::pasta('gravacoes')._P_.$disco;
+
+		$in  = fopen('php://input', 'rb');
+		$out = fopen($destino, 'wb');
+		$total = 0;
+		while ($in && !feof($in)) {
+			$bloco = fread($in, 1024 * 1024);
+			if($bloco === false || $bloco === ''){ break; }
+			$total += strlen($bloco);
+			if($total > Gravacoes::MAX['cartao']){
+				fclose($out);
+				@unlink($destino);
+				$this->responder(413, 'Grande demais.');
+			}
+			fwrite($out, $bloco);
+		}
+		fclose($out);
+
+		if($total === 0){
+			@unlink($destino);
+			$this->responder(400, 'Vazio.');
+		}
+
+		$r = Gravacoes::registar($idUtilizador, $k, $disco, $total);
+		if($r !== true){
+			$this->responder(422, $r);
+		}
+		$this->responder(200, 'Guardado.');
+	}
+
+	private function responder($codigo, $texto) {
+		http_response_code($codigo);
+		header('Content-Type: text/plain; charset=utf-8');
+		echo $texto;
+		exit;
 	}
 
 	private function validar($tipo, $alvo) {

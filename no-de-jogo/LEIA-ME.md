@@ -195,8 +195,17 @@ gosta de núcleos rápidos) antes da placa gráfica.
   endereços assinados e com prazo (`/no/ficheiro/…`, `NoControlo`). Guarda
   tudo em `cache` e só volta a descarregar se o ficheiro mudar. Uma descarga
   interrompida retoma de onde parou.
-- **Cartões de memória:** um por jogador, em `cartoes/<id do utilizador>`.
-  O que se grava no jogo fica para a próxima sessão, **neste nó**.
+- **Cartões de memória:** são da **conta**, guardados no site. O agente
+  lê o cartão do jogador do site antes de arrancar a consola
+  (`trazer_cartao`), e devolve-o comprimido ao terminar e de
+  `devolver_cartao` em `devolver_cartao` segundos. Assim a gravação segue
+  o jogador para qualquer nó. A pasta `cartoes/<id do utilizador>` é só a
+  cópia de trabalho.
+  - **A devolução final acontece antes de o agente responder ao site.** É
+    de propósito: quem acaba um jogo e começa outro faz o site pedir a
+    sessão nova logo a seguir, e essa sessão lê o cartão.
+  - Se o site não responder nesse momento, o cartão fica marcado como
+    `.pendente` e sobe na sessão seguinte, antes de se ler o do site.
 - **Lugares abandonados:**
   - o site termina a sessão quando a página do jogador deixa de dar sinal
     (2 minutos);

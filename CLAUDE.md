@@ -16,7 +16,10 @@ O domínio dos jogos vive em `lib/jogos/`:
 - `Bios.php`;
 - `Fila.php`: as sessões nos nós, a fila, os lugares abandonados;
 - `Agente.php`: os pedidos assinados ao nó, e os endereços assinados que
-  o nó usa para descarregar daqui.
+  o nó usa para descarregar daqui;
+- `Gravacoes.php`: as gravações de cada conta (sram, estados, cartão da
+  PS2). Do lado do browser, `tema/padrao/ext/assets/js/gravacoes.js`.
+  Do lado do nó, `trazer_cartao`/`devolver_cartao` no `agente.py`.
 
 `no-de-jogo/` é o programa da máquina com GPU (Python, Docker, nginx).
 Não corre no site, e o site não o serve. A assinatura HMAC dos pedidos

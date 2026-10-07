@@ -127,6 +127,7 @@ aguenta muitos jogadores.
 | `/jogos` | o catálogo, com filtro por consola e pesquisa |
 | `/jogar/ver/7` | jogar o jogo 7 |
 | `/jogar/local` | jogar um ficheiro do próprio computador (não é enviado ao servidor) |
+| `/gravacoes` | as gravações da conta: ver, descarregar, apagar |
 | `/admin` | gerir jogos: só para administradores (`nivl_us = 1`) |
 | `/admin/emulador` | de onde vem o EmulatorJS, e as BIOS |
 | `/servidores` | os servidores de jogo da PS2 e quem está a jogar: só para administradores |
@@ -214,10 +215,30 @@ instalado, o nó acrescenta-se em `/servidores`.
 
 ### Gravações
 
-O progresso dos jogos fica guardado **no browser** de cada pessoa
-(IndexedDB, pelo EmulatorJS). Outro computador ou outro browser não tem
-as gravações. Guardá-las no servidor, por conta, é um passo seguinte
-natural.
+O progresso de cada jogo fica **na conta da pessoa, no servidor**.
+Continua noutro computador ou noutro browser. Está em
+`lib/jogos/Gravacoes.php`.
+
+| O quê | Quando sobe | Quando desce |
+|---|---|---|
+| A gravação do próprio jogo (cartão de memória da PS1, pilha do cartucho...) | De minuto a minuto, só se mudou, e ao sair | Ao abrir o jogo (e a consola reinicia, para jogos que a lêem no arranque) |
+| Os estados (botões "Guardar/Carregar estado" do emulador) | Ao carregar no botão, no lugar 1 a 9 das definições | Ao carregar em "Carregar estado" |
+| O cartão de memória da PS2 (um por conta, para todos os jogos) | O nó devolve-o ao terminar e de 5 em 5 minutos | O nó lê-o ao arrancar a sessão |
+
+- Cada conta tem 1 GB (`Gravacoes::QUOTA`). Vê e apaga o que tem em
+  **As minhas gravações** (`/gravacoes`), onde também pode descarregar uma
+  cópia.
+- Quem já tinha gravações só no browser não as perde: na primeira vez que
+  abre o jogo, sem nada no servidor, a do browser sobe.
+- **Ficam de fora:**
+  - os jogos de **"Jogar do meu computador"**, porque não estão no
+    catálogo e não há a que os prender. Esses continuam a gravar só no
+    browser.
+  - as teclas de atalho de estado rápido do EmulatorJS: só os **botões**
+    passam pelo servidor.
+- Se o site estiver em baixo quando uma sessão de PS2 acaba, o nó guarda o
+  cartão e marca-o como pendente. Na sessão seguinte dessa conta nesse
+  nó, sobe antes de se ler o do site, e nada se perde.
 
 ### Direitos de autor
 

@@ -36,6 +36,10 @@ function titulo(){
 			}
 			break;
 
+		case 'gravacoes':
+			$titulo = 'As minhas gravações';
+			break;
+
 		case 'servidores':
 			switch (acao) {
 				case 'novo':   $titulo = 'Novo servidor de jogo';    break;

@@ -20,12 +20,13 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 <html lang="pt">
 <head>
 	<?=head()?>
+	<meta name="theme-color" content="#18181b">
 	<link rel="stylesheet" href="<?=url_versionada('tema/padrao/ext/assets/css/estilo.css')?>">
 </head>
 <body class="palco">
 
 <header class="palco-topo">
-	<a class="btn btn-escuro" href="<?=url_base('jogos')?>">&larr; Jogos</a>
+	<a class="btn btn-escuro" href="<?=url_base('jogos/ver/'.(int)$jogo['id_jg'])?>"><?=icone('voltar')?> Voltar</a>
 	<div class="palco-titulo">
 		<strong><?=esc($jogo['titulo_jg'])?></strong>
 		<small><?=esc($this->ver->consola['nome'])?></small>
@@ -68,7 +69,7 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 	window.EJS_gameName   = cfg.gameName;
 	window.EJS_gameID     = cfg.gameID;
 	window.EJS_language   = 'pt-BR';
-	window.EJS_color      = '#3b5de7';
+	window.EJS_color      = '#14b8a6';
 	if (cfg.biosUrl) { window.EJS_biosUrl = cfg.biosUrl; }
 	if (cfg.threads) { window.EJS_threads = true; }
 

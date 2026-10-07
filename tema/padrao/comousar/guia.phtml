@@ -1,0 +1,78 @@
+<?php
+/*
+Um guia. Os blocos vêm de Guias::todos(); cada tipo desenha-se aqui.
+O texto passa sempre por Guias::formatar(), que escapa primeiro.
+*/
+$g = $this->ver->guia;
+?>
+<nav class="guia-indice" aria-label="Outros guias">
+	<a href="<?=url_base('como-usar')?>"><?=icone('voltar')?> Todos os guias</a>
+	<?php foreach ($this->ver->grupos as $lista): foreach ($lista as $k => $outro): ?>
+	<a class="<?=$k === $this->ver->chave ? 'active' : ''?>" href="<?=url_base('como-usar/guia/'.$k)?>"><?=esc($outro['titulo'])?></a>
+	<?php endforeach; endforeach; ?>
+</nav>
+
+<article class="cartao" style="--tom: <?=esc($g['tom'])?>; max-width: 880px">
+	<div style="display:flex;gap:16px;align-items:center;margin-bottom:8px">
+		<span class="guia-icone"><?=icone($g['icone'], 'icone-grande')?></span>
+		<div>
+			<small class="texto-fraco"><?=esc($g['grupo'])?></small>
+			<h2 style="margin:0"><?=esc($g['titulo'])?></h2>
+		</div>
+	</div>
+	<p class="texto-fraco"><?=esc($g['resumo'])?></p>
+
+	<?php foreach ($g['blocos'] as $b): ?>
+		<?php switch ($b[0]):
+			case 'h': ?>
+			<h3 style="margin-top:28px"><?=Guias::formatar($b[1])?></h3>
+		<?php break; case 'p': ?>
+			<p><?=Guias::formatar($b[1])?></p>
+		<?php break; case 'passos': ?>
+			<ol class="passos">
+				<?php foreach ($b[1] as $passo): ?><li><?=Guias::formatar($passo)?></li><?php endforeach; ?>
+			</ol>
+		<?php break; case 'nota': ?>
+			<div class="nota"><?=icone('info')?><div><?=Guias::formatar($b[1])?></div></div>
+		<?php break; case 'alerta': ?>
+			<div class="nota nota-alerta"><?=icone('alerta')?><div><?=Guias::formatar($b[1])?></div></div>
+		<?php break; case 'teclas': ?>
+			<div class="teclas" style="margin:12px 0">
+				<?php foreach (Guias::teclas($b[1]) as [$tecla, $faz]): ?>
+				<span><kbd><?=esc($tecla)?></kbd></span><span class="texto-fraco"><?=esc($faz)?></span>
+				<?php endforeach; ?>
+			</div>
+		<?php break; case 'consolas':
+			//'*bios': todas as consolas que usam BIOS; senão, as de uma família
+			$lista = [];
+			foreach (Consolas::porFamilia() as $familia => $cs) {
+				foreach ($cs as $chave => $c) {
+					if($b[1] === '*bios' ? $c['bios'] !== 'nao' : $familia === $b[1]){ $lista[$chave] = $c; }
+				}
+			}
+			$biosNomes = ['nao' => 'Não precisa', 'opcional' => 'Opcional', 'obrigatoria' => 'Obrigatória'];
+			?>
+			<div class="tabela-rola" style="margin:12px 0">
+			<table>
+				<thead><tr><th>Consola</th><th>Formatos</th><th>BIOS</th><th>Onde corre</th></tr></thead>
+				<tbody>
+				<?php foreach ($lista as $chave => $c): $tem = Bios::de($chave); ?>
+				<tr>
+					<td><strong><?=esc($c['nome'])?></strong></td>
+					<td><?php foreach (Consolas::extensoes($chave) as $e): ?><code>.<?=esc($e)?></code> <?php endforeach; ?></td>
+					<td>
+						<?=esc($biosNomes[$c['bios']])?>
+						<?php if($c['bios'] !== 'nao'): ?>
+							<?php //a vermelho só o que impede de jogar: uma opcional em falta não é um problema ?>
+							<br><small class="<?=$tem ? 'estado-ok' : ($c['bios'] === 'obrigatoria' ? 'estado-mal' : 'texto-fraco')?>"><?=$tem ? 'Instalada no site' : 'Ainda não instalada'?></small>
+						<?php endif; ?>
+					</td>
+					<td><?=$c['modo'] === 'servidor' ? 'No servidor' : 'No browser'?></td>
+				</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+			</div>
+		<?php break; endswitch; ?>
+	<?php endforeach; ?>
+</article>

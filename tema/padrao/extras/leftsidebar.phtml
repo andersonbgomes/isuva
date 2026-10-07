@@ -1,30 +1,46 @@
 <?php
 /*
-O MENU.
+A BARRA DE ÍCONES: à esquerda no computador, em baixo no telemóvel (é o
+CSS que decide, em .barra).
 
-Está escrito à mão, e assim fica bem enquanto for curto. O __('rota')
-marca o item da rota aberta.
+Um item por linha do array, para acrescentar um é acrescentar uma linha.
+A etiqueta (.dica) aparece ao passar o rato; no telemóvel não há rato, e
+por isso o aria-label leva o mesmo texto -- é também o que um leitor de
+ecrã lê.
 
-Quando o projecto crescer, isto passa a sair de um array (ou da base de
-dados) com um foreach -- e é aí que se lhe acrescenta a verificação de
-permissões, para cada pessoa ver só o que lhe toca.
+Os itens do administrador só aparecem a quem o é. Esconder aqui é só
+arrumação: a porta fecha-se em cada controlador, com so_admin().
 */
+$itens = [
+	['jogos',      'jogos',      'casa',     'Jogos'],
+	['jogar',      'jogar/local','portatil', 'Jogar do meu computador'],
+	['gravacoes',  'gravacoes',  'gravar',   'As minhas gravações'],
+	['bios',       'bios',       'chip',     'BIOS'],
+	['como-usar',  'como-usar',  'livro',    'Como usar'],
+];
+$admin = [
+	['admin',        'admin',        'grelha',   'Gerir jogos'],
+	['servidores',   'servidores',   'servidor', 'Servidores de jogo'],
+	['utilizadores', 'utilizadores', 'pessoas',  'Contas'],
+];
 ?>
-<nav class="menu">
-	<ul>
-		<li><a class="<?=__('jogos')?>" href="<?=url_base('jogos')?>">Jogos</a></li>
-		<li><a class="<?=__('jogar')?>" href="<?=url_base('jogar/local')?>">Jogar do meu computador</a></li>
-		<li><a class="<?=__('gravacoes')?>" href="<?=url_base('gravacoes')?>">As minhas gravações</a></li>
+<nav class="barra" aria-label="Navegação principal">
+	<a class="barra-marca" href="<?=url_base('jogos')?>" aria-label="<?=esc(configura('tit'))?>"><?=icone('comando', 'icone-grande')?></a>
 
-		<?php
-		/*
-		O painel só aparece a quem o pode usar. Esconder aqui é só
-		arrumação: a porta fecha-se no AdminControlo, com so_admin() em
-		cada acção.
-		*/
-		if($this->e_admin()): ?>
-		<li><a class="<?=__('admin')?>" href="<?=url_base('admin')?>">Gerir jogos</a></li>
-		<li><a class="<?=__('servidores')?>" href="<?=url_base('servidores')?>">Servidores de jogo</a></li>
+	<div class="barra-nav">
+		<?php foreach ($itens as [$rota, $endereco, $ic, $texto]): ?>
+		<a class="<?=__($rota)?>" href="<?=url_base($endereco)?>" aria-label="<?=esc($texto)?>">
+			<span class="dica"><?=esc($texto)?></span><?=icone($ic)?>
+		</a>
+		<?php endforeach; ?>
+
+		<?php if($this->e_admin()): ?>
+		<span class="barra-sep"></span>
+		<?php foreach ($admin as [$rota, $endereco, $ic, $texto]): ?>
+		<a class="<?=__($rota)?>" href="<?=url_base($endereco)?>" aria-label="<?=esc($texto)?>">
+			<span class="dica"><?=esc($texto)?></span><?=icone($ic)?>
+		</a>
+		<?php endforeach; ?>
 		<?php endif; ?>
-	</ul>
+	</div>
 </nav>

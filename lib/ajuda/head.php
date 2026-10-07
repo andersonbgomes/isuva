@@ -27,12 +27,35 @@ function titulo(){
 
 		case 'jogos':
 			$titulo = 'Jogos';
+			if(acao === 'ver'){
+				$j = new Jogo;
+				$j->__add('dados', ['id_jg = ' => (int)id]);
+				$j->pegar();
+				if(!empty($j->fetch['titulo_jg'])){ $titulo = $j->fetch['titulo_jg']; }
+			}
 			break;
 
 		case 'jogar':
 			switch (acao) {
 				case 'local': $titulo = 'Jogar do meu computador'; break;
 				default:      $titulo = 'A jogar';                 break;
+			}
+			break;
+
+		case 'como-usar':
+			$titulo = 'Como usar';
+			if(acao === 'guia' && ($g = Guias::pegar((string)id, true))){ $titulo = $g['titulo']; }
+			break;
+
+		case 'bios':
+			$titulo = 'BIOS';
+			break;
+
+		case 'utilizadores':
+			switch (acao) {
+				case 'novo':   $titulo = 'Nova conta';   break;
+				case 'editar': $titulo = 'Editar conta'; break;
+				default:       $titulo = 'Contas';       break;
 			}
 			break;
 

@@ -17,6 +17,10 @@ O domínio dos jogos vive em `lib/jogos/`:
 - `Fila.php`: as sessões nos nós, a fila, os lugares abandonados;
 - `Agente.php`: os pedidos assinados ao nó, e os endereços assinados que
   o nó usa para descarregar daqui;
+- `Guias.php`: o texto do "Como usar", um guia por cartão. As tabelas
+  de formatos e de BIOS saem do `Consolas.php`, e as teclas de
+  `Guias::teclas()`. Mudar as teclas no EmulatorJS ou no PCSX2 obriga a
+  mudar essa lista também;
 - `Gravacoes.php`: as gravações de cada conta (sram, estados, cartão da
   PS2). Do lado do browser, `tema/padrao/ext/assets/js/gravacoes.js`.
   Do lado do nó, `trazer_cartao`/`devolver_cartao` no `agente.py`.
@@ -37,6 +41,7 @@ tem de ser igual nos dois lados (`Agente::assinar()` e `assinar()` no
 - `lib/ajuda/_values_.php` — as funções globais (`url_base()`, `esc()`,
   `csrf_*()`, `nlog()`).
 - `lib/ajuda/head.php` — o `<head>` e o título de cada rota.
+- `lib/ajuda/icones.php` — `icone('nome')`, os ícones do tema (Lucide, em linha).
 - `tema/` — os temas. O activo vem da definição `tema` (`app_config`).
 - `instalacao/instalacao.sql` — o que monta uma base de dados de raiz.
 - `migrations/` — as alterações à base de dados, uma por ficheiro.
@@ -61,6 +66,13 @@ excepto os da lista `Acao::SEM_SESSAO`.
 4. A tabela em `migrations/` **e** em `instalacao/instalacao.sql`.
 5. Um `case` em `lib/ajuda/head.php` (título) e uma linha em
    `tema/<tema>/extras/leftsidebar.phtml` (menu).
+
+## BIOS: nunca para descarregar
+
+As BIOS têm direitos de autor. O site entrega-as **ao emulador**
+(`JogarControlo::bios`, `NoControlo::bios`), e a página `/bios` só diz o
+estado de cada consola. Não se acrescenta um botão de descarregar BIOS,
+nem uma lista de links para sites que as oferecem.
 
 ## Segurança — aplicar sempre
 

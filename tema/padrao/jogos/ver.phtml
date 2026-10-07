@@ -1,0 +1,128 @@
+<?php
+/*
+A TELA DE UM JOGO: a capa em grande (e desfocada por trás de tudo), a
+descrição, o botão de jogar, os controlos e as gravações desta conta.
+
+Os controlos dependem de onde o jogo corre:
+  - browser: os do EmulatorJS (mudam-se no ícone de comando, dentro do jogo);
+  - servidor (PS2): os do PCSX2 no nó (no-de-jogo/imagem-ps2/PCSX2.ini.modelo).
+Num caso e no outro, um comando ligado ao computador funciona sem
+configurar nada.
+*/
+$j = $this->ver->jogo;
+$c = $this->ver->consola;
+$noServidor = $c['modo'] === 'servidor';
+$familia = strtolower($c['familia']);
+$capa = !empty($j['capa_jg']) ? url_base('jogar/capa/'.(int)$j['id_jg']) : '';
+$guia = ['nintendo' => 'nintendo', 'sega' => 'sega', 'playstation' => $noServidor ? 'ps2' : 'playstation'][$familia] ?? 'primeiros-passos';
+
+$teclas = Guias::teclas($c['modo']);
+$nomesTipo = ['sram' => 'Gravação do jogo', 'estado' => 'Estado'];
+?>
+<section class="ficha">
+	<div class="ficha-fundo <?=$capa ? '' : 'sem-capa capa-'.esc(in_array($familia, ['nintendo', 'sega', 'playstation'], true) ? $familia : 'outra')?>"
+	     <?php if($capa): ?>style="background-image:url('<?=esc($capa)?>')"<?php endif; ?>></div>
+	<div class="ficha-veu"></div>
+
+	<div class="ficha-corpo">
+		<div class="ficha-capa">
+			<div class="jogo-capa <?=$capa ? '' : 'capa-'.esc(in_array($familia, ['nintendo', 'sega', 'playstation'], true) ? $familia : 'outra')?>">
+				<?php if($capa): ?><img src="<?=esc($capa)?>" alt="Capa de <?=esc($j['titulo_jg'])?>">
+				<?php else: ?><span><?=esc(mb_strtoupper(mb_substr($j['titulo_jg'], 0, 1)))?></span><?php endif; ?>
+			</div>
+		</div>
+
+		<div>
+			<div class="ficha-etiquetas">
+				<span class="etiqueta"><?=esc($c['nome'])?></span>
+				<?php if($noServidor): ?>
+				<span class="etiqueta etiqueta-servidor"><?=icone('nuvem')?> Corre no servidor</span>
+				<?php else: ?>
+				<span class="etiqueta etiqueta-fraca"><?=icone('relampago')?> Corre no seu browser</span>
+				<?php endif; ?>
+				<?php if((int)$j['stto_jg'] !== 1): ?><span class="etiqueta etiqueta-fraca">Escondido</span><?php endif; ?>
+			</div>
+
+			<h1><?=esc($j['titulo_jg'])?></h1>
+
+			<?php if(!empty($j['descricao_jg'])): ?>
+			<p class="ficha-descricao"><?=esc($j['descricao_jg'])?></p>
+			<?php else: ?>
+			<p class="ficha-descricao"><?=esc($c['nota'])?></p>
+			<?php endif; ?>
+
+			<?php if($c['bios'] === 'obrigatoria' && empty($this->ver->bios)): ?>
+			<div class="nota nota-alerta"><?=icone('alerta')?>
+				<div>Este jogo ainda não arranca: falta a BIOS da <?=esc($c['nome'])?>.
+				<?php if($this->e_admin()): ?><a href="<?=url_base('admin/emulador')?>">Enviar a BIOS</a>.<?php else: ?>O administrador já foi avisado na página <a href="<?=url_base('bios')?>">BIOS</a>.<?php endif; ?></div>
+			</div>
+			<?php endif; ?>
+
+			<div class="ficha-accoes">
+				<a class="btn btn-grande" href="<?=url_base('jogar/ver/'.(int)$j['id_jg'])?>"><?=icone('jogar')?> Jogar agora</a>
+				<a class="btn btn-claro btn-grande" href="<?=url_base('como-usar/guia/'.$guia)?>"><?=icone('livro')?> Como jogar</a>
+				<?php if($this->e_admin()): ?>
+				<a class="btn btn-claro btn-grande" href="<?=url_base('admin/editar/'.(int)$j['id_jg'])?>">Editar</a>
+				<?php endif; ?>
+			</div>
+		</div>
+	</div>
+</section>
+
+<div class="duas-colunas">
+	<div class="cartao">
+		<h3><?=icone('teclado')?> Controlos</h3>
+		<div class="teclas">
+			<?php foreach ($teclas as [$tecla, $faz]): ?>
+			<span><kbd><?=esc($tecla)?></kbd></span><span class="texto-fraco"><?=esc($faz)?></span>
+			<?php endforeach; ?>
+		</div>
+		<p class="ajuda">
+			<?php if($noServidor): ?>
+			Um comando ligado ao computador funciona sem configurar nada.
+			<?php else: ?>
+			Um comando ligado ao computador funciona sem configurar nada. Para mudar as teclas,
+			use o ícone do comando na barra do emulador, dentro do jogo.
+			<?php endif; ?>
+		</p>
+	</div>
+
+	<div class="cartao">
+		<h3><?=icone('gravar')?> As suas gravações</h3>
+		<?php if($noServidor): $cartao = $this->ver->gravacoes['cartao']; ?>
+			<div class="linha-info"><?=icone('info')?>
+				<div>Na <?=esc($c['nome'])?> grava-se no cartão de memória, dentro do jogo. O cartão é da sua conta e serve para todos os jogos desta consola.</div>
+			</div>
+			<div class="linha-info"><?=icone($cartao ? 'certo' : 'gravar')?>
+				<div><?=$cartao ? 'Cartão guardado a '.esc(data_pt($cartao['actualizado_gv'], true)).' ('.esc(Armazem::legivel($cartao['tamanho_gv'])).').' : 'Ainda não tem cartão guardado: é criado na primeira vez que gravar.'?></div>
+			</div>
+		<?php else: $lista = $this->ver->gravacoes['lista']; ?>
+			<?php if(empty($lista)): ?>
+			<div class="linha-info"><?=icone('info')?>
+				<div>Ainda não há gravações deste jogo. Tudo o que gravar dentro do jogo, e os estados que guardar no
+				emulador, ficam na sua conta: pode continuar noutro computador.</div>
+			</div>
+			<?php else: ?>
+				<?php foreach ($lista as $g): ?>
+				<div class="linha-info"><?=icone('certo')?>
+					<div><strong><?=esc($nomesTipo[$g['tipo_gv']] ?? $g['tipo_gv'])?><?=$g['tipo_gv'] === 'estado' ? ' '.(int)$g['slot_gv'] : ''?></strong>
+					<span class="texto-fraco">&middot; <?=esc(data_pt($g['actualizado_gv'], true))?> &middot; <?=esc(Armazem::legivel($g['tamanho_gv']))?></span></div>
+				</div>
+				<?php endforeach; ?>
+			<?php endif; ?>
+		<?php endif; ?>
+		<p class="ajuda"><a href="<?=url_base('gravacoes')?>">Ver todas as gravações</a></p>
+	</div>
+</div>
+
+<?php if(!empty($this->ver->mais)): ?>
+<section class="seccao" style="margin-top:28px">
+	<div class="seccao-cabeca">
+		<h2>Mais jogos de <?=esc($c['nome'])?></h2>
+		<a class="ver-todos" href="<?=url_base('jogos')?>?consola=<?=urlencode($j['consola_jg'])?>"><span>Ver todos</span><?=icone('seta')?></a>
+	</div>
+	<div class="grelha-jogos">
+		<?php foreach ($this->ver->mais as $j) { include __DIR__.'/_cartao.phtml'; } ?>
+	</div>
+</section>
+<?php endif; ?>

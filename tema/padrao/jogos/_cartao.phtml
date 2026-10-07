@@ -1,0 +1,32 @@
+<?php
+/*
+O cartão de um jogo -- usado no catálogo, na tela de um jogo ("mais
+jogos") e em qualquer sítio que mostre jogos. Espera $j (a linha do jogo).
+
+Sem capa, mostra um degradê com a cor da família e a inicial do título:
+um catálogo acabado de montar, sem capas, continua a parecer arrumado.
+*/
+$_c = Consolas::pegar($j['consola_jg']);
+$_familia = strtolower($_c['familia'] ?? 'outra');
+?>
+<a class="jogo" href="<?=url_base('jogos/ver/'.(int)$j['id_jg'])?>">
+	<?php if(Consolas::noServidor($j['consola_jg'])): ?>
+	<span class="etiqueta etiqueta-servidor jogo-etiqueta"><?=icone('nuvem')?> Servidor</span>
+	<?php endif; ?>
+	<div class="jogo-capa <?=!empty($j['capa_jg']) ? '' : 'capa-'.esc(in_array($_familia, ['nintendo', 'sega', 'playstation'], true) ? $_familia : 'outra')?>">
+		<?php if(!empty($j['capa_jg'])): ?>
+		<img src="<?=url_base('jogar/capa/'.(int)$j['id_jg'])?>" alt="" loading="lazy">
+		<?php else: ?>
+		<span><?=esc(mb_strtoupper(mb_substr($j['titulo_jg'], 0, 1)))?></span>
+		<?php endif; ?>
+	</div>
+	<div class="jogo-sombra">
+		<div class="jogo-info">
+			<div>
+				<strong><?=esc($j['titulo_jg'])?></strong>
+				<small><?=esc(Consolas::nome($j['consola_jg']))?></small>
+			</div>
+			<span class="jogo-seta"><?=icone('seta')?></span>
+		</div>
+	</div>
+</a>

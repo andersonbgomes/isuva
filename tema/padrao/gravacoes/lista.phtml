@@ -32,7 +32,7 @@ $pct = min(100, round($this->ver->usado / Gravacoes::QUOTA * 100));
 					<?php if($g['tipo_gv'] === 'cartao'): ?>
 						<?=esc(Consolas::nome($g['consola_gv']))?> <span class="texto-fraco">(todos os jogos)</span>
 					<?php elseif($g['titulo_jg'] !== null): ?>
-						<a href="<?=url_base('jogar/ver/'.(int)$g['jogo_gv'])?>"><?=esc($g['titulo_jg'])?></a>
+						<a href="<?=url_base('jogos/ver/'.(int)$g['jogo_gv'])?>"><?=esc($g['titulo_jg'])?></a>
 					<?php else: ?>
 						<span class="texto-fraco">Jogo que já saiu do catálogo</span>
 					<?php endif; ?>

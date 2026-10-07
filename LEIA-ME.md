@@ -107,9 +107,21 @@ aplicação rebentar com *Unknown column*.
 
 ## Tema
 
-O `tema/padrao/` é propositadamente pobre: HTML simples e um CSS escrito
-à mão, sem Bootstrap nem framework nenhuma, para não impor uma escolha ao
-projecto que vier a seguir.
+O `tema/padrao/` é escuro e feito para jogos, inspirado no TailGame
+(taildashboards.com):
+
+- fundo zinco, verde-água como cor de destaque;
+- uma barra de ícones à esquerda (em baixo, no telemóvel);
+- pesquisa em cápsula no topo;
+- cartões de jogo com a capa a ocupar tudo.
+
+O CSS (`ext/assets/css/estilo.css`) é **escrito à mão, sem Tailwind**.
+O Tailwind sem passo de compilação compila no browser de cada visitante,
+e é lento para os computadores fracos que são o público deste site. As
+cores estão em variáveis no topo do ficheiro.
+
+Os ícones são do Lucide (licença ISC), desenhados em linha por
+`icone('nome')` (`lib/ajuda/icones.php`).
 
 Um tema novo é uma pasta ao lado, com os mesmos ficheiros em `extras/`.
 Troca-se na definição `tema`, na tabela `app_config`.
@@ -124,7 +136,11 @@ aguenta muitos jogadores.
 
 | Rota | O quê |
 |---|---|
-| `/jogos` | o catálogo, com filtro por consola e pesquisa |
+| `/jogos` | o catálogo: continuar a jogar, novidades e uma secção por família; filtros e pesquisa |
+| `/jogos/ver/7` | a tela do jogo 7: capa, descrição, jogar, controlos, gravações |
+| `/como-usar` | os guias, um por cartão (os de administração só para administradores) |
+| `/bios` | de que BIOS cada consola precisa e se o site já a tem (sem ficheiros para descarregar) |
+| `/utilizadores` | as contas: criar, activar e desactivar, dar acesso de administrador |
 | `/jogar/ver/7` | jogar o jogo 7 |
 | `/jogar/local` | jogar um ficheiro do próprio computador (não é enviado ao servidor) |
 | `/gravacoes` | as gravações da conta: ver, descarregar, apagar |

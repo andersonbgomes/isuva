@@ -1,5 +1,8 @@
 </main>
 
 <footer class="rodape">
-	&copy; <?=date('Y')?> <?=esc(configura('tit'))?> &middot; versão <?=VERSAO_APP?>
+	<div class="contentor">
+		<div>&copy; <?=date('Y')?> <strong><?=esc(configura('tit'))?></strong> &middot; versão <?=VERSAO_APP?></div>
+		<div><a href="<?=url_base('como-usar')?>">Como usar</a> &middot; <a href="<?=url_base('bios')?>">BIOS</a></div>
+	</div>
 </footer>

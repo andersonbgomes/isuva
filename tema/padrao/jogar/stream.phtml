@@ -24,12 +24,13 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 <html lang="pt">
 <head>
 	<?=head()?>
+	<meta name="theme-color" content="#18181b">
 	<link rel="stylesheet" href="<?=url_versionada('tema/padrao/ext/assets/css/estilo.css')?>">
 </head>
 <body class="palco">
 
 <header class="palco-topo">
-	<a class="btn btn-escuro" href="<?=url_base('jogos')?>">&larr; Jogos</a>
+	<a class="btn btn-escuro" href="<?=url_base('jogos/ver/'.(int)$jogo['id_jg'])?>"><?=icone('voltar')?> Voltar</a>
 	<div class="palco-titulo">
 		<strong><?=esc($jogo['titulo_jg'])?></strong>
 		<small><?=esc($this->ver->consola['nome'])?> &middot; a correr no servidor</small>
@@ -64,7 +65,7 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 	var URL_PEDIR   = <?=json_encode(url_base('jogar/pedir/'.(int)$jogo['id_jg']), $JSON)?>;
 	var URL_ESTADO  = <?=json_encode(url_base('jogar/estado/'), $JSON)?>;
 	var URL_SAIR    = <?=json_encode(url_base('jogar/terminar/'), $JSON)?>;
-	var URL_JOGOS   = <?=json_encode(url_base('jogos'), $JSON)?>;
+	var URL_JOGOS   = <?=json_encode(url_base('jogos/ver/'.(int)$jogo['id_jg']), $JSON)?>;
 	var CSRF        = <?=json_encode(csrf_token(), $JSON)?>;
 
 	var sessao = null, aJogar = false, acabou = false;

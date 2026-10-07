@@ -35,6 +35,12 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 		<strong><?=esc($jogo['titulo_jg'])?></strong>
 		<small><?=esc($this->ver->consola['nome'])?> &middot; a correr no servidor</small>
 	</div>
+	<?php
+	//na PS2 o comando é lido dentro do <iframe> do nó (o Selkies), mas o
+	//browser mostra-o a toda a página -- o indicador serve igual: diz se o
+	//comando já foi reconhecido, ou o que falta
+	include _C_._P_.'tema'._P_.tema._P_.'extras'._P_.'comando-estado.phtml';
+	?>
 	<div class="palco-botoes" id="botoes" hidden>
 		<button type="button" class="btn btn-escuro" id="inteiro">Ecrã inteiro</button>
 		<a class="btn btn-escuro" id="janela" href="#" target="_blank" rel="noopener">Abrir noutra janela</a>

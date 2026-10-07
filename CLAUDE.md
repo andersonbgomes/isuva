@@ -21,6 +21,9 @@ O domínio dos jogos vive em `lib/jogos/`:
   de formatos e de BIOS saem do `Consolas.php`, e as teclas de
   `Guias::teclas()`. Mudar as teclas no EmulatorJS ou no PCSX2 obriga a
   mudar essa lista também;
+- `Bios.php` aceita a BIOS num `.zip` (`deZip`): na PS2 extrai o `.bin`
+  principal (o PCSX2 não lê .zip); nas consolas de browser deixa o .zip
+  inteiro (o EmulatorJS abre-o, e a DS precisa de vários ficheiros);
 - `Gravacoes.php`: as gravações de cada conta (sram, estados, cartão da
   PS2). Do lado do browser, `tema/padrao/ext/assets/js/gravacoes.js`.
   Do lado do nó, `trazer_cartao`/`devolver_cartao` no `agente.py`.
@@ -83,12 +86,20 @@ redireccionar: senão é um redireccionamento aberto para fora do site.
 5. Um `case` em `lib/ajuda/head.php` (título) e uma linha em
    `tema/<tema>/extras/leftsidebar.phtml` (menu).
 
+## Comandos
+
+`tema/padrao/ext/assets/js/comandos.js`: o nome legível de cada comando,
+o indicador do ecrã de jogo, e a atribuição dos comandos sem jogador no
+EmulatorJS. A página `/comandos` testa um comando botão a botão.
+
 ## BIOS: nunca para descarregar
 
 As BIOS têm direitos de autor. O site entrega-as **ao emulador**
 (`JogarControlo::bios`, `NoControlo::bios`), e a página `/bios` só diz o
 estado de cada consola. Não se acrescenta um botão de descarregar BIOS,
-nem uma lista de links para sites que as oferecem.
+nem uma lista de links para sites que as oferecem, e **nenhuma BIOS entra
+no repositório nem vem "de origem" com o sistema**: cada administrador
+envia a sua, no painel. A da PS2 nunca sai do servidor e do nó.
 
 ## Segurança — aplicar sempre
 

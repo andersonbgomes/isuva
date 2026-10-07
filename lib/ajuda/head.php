@@ -55,6 +55,10 @@ function titulo(){
 			$titulo = 'BIOS';
 			break;
 
+		case 'comandos':
+			$titulo = 'Testar o comando';
+			break;
+
 		case 'utilizadores':
 			switch (acao) {
 				case 'novo':   $titulo = 'Nova conta';   break;

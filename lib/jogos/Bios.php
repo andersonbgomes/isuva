@@ -46,6 +46,80 @@ class Bios {
 		}
 	}
 
+	/*
+	Uma BIOS que chegou num .zip (é assim que quase todas se descarregam).
+
+	    browser   o .zip fica TAL E QUAL: o EmulatorJS abre-o sozinho e
+	              põe cada ficheiro no sítio. Há consolas que precisam de
+	              vários (a DS usa bios7.bin, bios9.bin e firmware.bin) --
+	              tirar só um partia-as.
+	    servidor  (PS2) o PCSX2 não lê .zip: tira-se de lá a BIOS
+	              principal e é só essa que fica. O .zip é apagado.
+
+	Devolve ['disco' => ..., 'nome' => ...] (o que fica guardado) ou a
+	mensagem do problema. $disco é o ficheiro .zip já no armazém.
+	*/
+	public static function deZip($consola, $disco, $nome) {
+		if(strtolower(pathinfo($nome, PATHINFO_EXTENSION)) !== 'zip' || !Consolas::noServidor($consola)){
+			return ['disco' => $disco, 'nome' => $nome];
+		}
+		if(!class_exists('ZipArchive')){
+			Armazem::apagar('bios', $disco);
+			return 'O PHP deste servidor não abre .zip (falta a extensão zip). Extraia a BIOS e envie o ficheiro .bin.';
+		}
+
+		$zip = new ZipArchive;
+		if($zip->open(Armazem::caminho('bios', $disco)) !== true){
+			Armazem::apagar('bios', $disco);
+			return 'O .zip não abre. Confirme que o ficheiro não está estragado.';
+		}
+
+		/*
+		A BIOS principal da PS2 é um .bin de 4 MB (os outros ficheiros que
+		os extractores criam -- .rom1, .erom, .nvm, .mec -- são extras de
+		que os jogos não precisam). Escolhe-se o .bin de 4 MB, e entre
+		vários o que se chama scph...; não havendo nenhum de 4 MB, o maior
+		.bin.
+
+		O tamanho vem do índice do .zip e é verificado ANTES de extrair:
+		um .zip pequeno pode desdobrar-se em gigabytes (uma "bomba zip").
+		*/
+		$melhor = null;
+		for ($i = 0; $i < $zip->numFiles; $i++) {
+			$st = $zip->statIndex($i);
+			$base = basename(str_replace('\\', '/', (string)$st['name']));
+			if($base === '' || substr($st['name'], -1) === '/'){ continue; }
+			if(strtolower(pathinfo($base, PATHINFO_EXTENSION)) !== 'bin'){ continue; }
+			if($st['size'] <= 0 || $st['size'] > TAMANHO_MAX_BIOS){ continue; }
+
+			$pontos = ($st['size'] === 4 * 1024 * 1024 ? 100 : 0) + (stripos($base, 'scph') === 0 ? 10 : 0);
+			if($melhor === null || $pontos > $melhor['pontos'] || ($pontos === $melhor['pontos'] && $st['size'] > $melhor['size'])){
+				$melhor = ['indice' => $i, 'nome' => $base, 'size' => $st['size'], 'pontos' => $pontos];
+			}
+		}
+
+		if($melhor === null){
+			$zip->close();
+			Armazem::apagar('bios', $disco);
+			return 'Não encontrei nenhuma BIOS (.bin) dentro do .zip.';
+		}
+
+		$dados = $zip->getFromIndex($melhor['indice'], TAMANHO_MAX_BIOS);
+		$zip->close();
+		Armazem::apagar('bios', $disco);
+
+		if($dados === false || strlen($dados) !== (int)$melhor['size']){
+			return 'Não foi possível tirar a BIOS de dentro do .zip.';
+		}
+
+		$nomeBios = Armazem::nomeLimpo($melhor['nome']);
+		$novo = Armazem::nomeNovo($nomeBios);
+		if(file_put_contents(Armazem::pasta('bios')._P_.$novo, $dados) === false){
+			return 'Não foi possível guardar a BIOS no servidor.';
+		}
+		return ['disco' => $novo, 'nome' => $nomeBios];
+	}
+
 	public static function apagar($consola) {
 		$anterior = self::de($consola);
 		$stt = Con::ecta()->prepare("DELETE FROM `app_config` WHERE `conf_chave` = ?");

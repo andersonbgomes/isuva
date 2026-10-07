@@ -194,10 +194,21 @@ as consolas de browser, o "Como usar" e a página BIOS são públicos
 - **Formatos de CD** (PS1, Sega CD, Saturn): o melhor é um `.chd`, ou o
   `.cue` e os `.bin` juntos num `.zip`. Um `.bin` sozinho nem sempre arranca.
 
+### Comandos
+
+Qualquer comando que o computador reconheça funciona, por USB ou Bluetooth: o da PS4, o da PS5, o da Xbox, o Switch Pro e comandos genéricos. Chegam ao browser pela Gamepad API, e não é preciso instalar nada.
+
+- **`/comandos`:** mostra o comando desenhado, com cada botão a acender, os analógicos e os gatilhos a mexer, e testa a vibração.
+- **O ecrã de jogo** tem um indicador. Diz se o comando foi reconhecido e com que jogador ficou, ou o que falta.
+- **Os dois motivos de "não funciona":**
+  - o browser só mostra o comando **depois de se premir um botão** com a página aberta;
+  - os browsers só dão comandos a sites em **HTTPS**.
+- **No EmulatorJS:** o `comandos.js` põe qualquer comando sem jogador no primeiro lugar livre. O EmulatorJS só o faz no instante em que o comando aparece.
+
 ### BIOS
 
 A PS1, o Saturn, o GBA e o DS correm sem BIOS, mas melhor com ela. O
-**Sega CD não arranca sem ela**. As BIOS têm direitos de autor e não vêm
+**Sega CD não arranca sem ela**. Pode enviar-se o **.zip** tal como se descarregou: na PS2 o site tira de lá a BIOS principal; nas outras o .zip fica inteiro, porque o EmulatorJS abre-o sozinho. As BIOS têm direitos de autor e não vêm
 com o site: o administrador envia as suas em `/admin/emulador`, **com o
 nome original** (`scph5501.bin`, `bios_CD_U.bin`, ...), porque é pelo
 nome que o emulador as procura.

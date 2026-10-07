@@ -46,7 +46,8 @@ abstract class Acao {
 	//conta -- gravar, a PS2, as BIOS, o painel -- pede-a DENTRO do
 	//controlador, acção a acção, com so_conta() ou so_admin().
 	const SEM_SESSAO = ['AuthControlo', 'NoControlo', 'RegistoControlo', 'IndexControlo',
-	                    'JogosControlo', 'JogarControlo', 'ComousarControlo', 'BiosControlo'];
+	                    'JogosControlo', 'JogarControlo', 'ComousarControlo', 'BiosControlo',
+	                    'ComandosControlo'];
 
 	public function __construct() {
 		$this->ver = new stdClass();

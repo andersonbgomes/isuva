@@ -86,9 +86,11 @@ $nomesTipo = ['sram' => 'Gravação do jogo', 'estado' => 'Estado'];
 			<?php if($noServidor): ?>
 			Um comando ligado ao computador funciona sem configurar nada.
 			<?php else: ?>
-			Um comando ligado ao computador funciona sem configurar nada. Para mudar as teclas,
-			use o ícone do comando na barra do emulador, dentro do jogo.
+			Um comando ligado ao computador (USB ou Bluetooth) funciona sem configurar nada: prima um botão
+			depois de abrir o jogo. Para mudar as teclas, use o ícone do comando na barra do emulador.
 			<?php endif; ?>
+			<br><a href="<?=url_base('comandos')?>">Testar o meu comando</a> &middot;
+			<a href="<?=url_base('como-usar/guia/comandos')?>">Como ligar um comando</a>
 		</p>
 	</div>
 

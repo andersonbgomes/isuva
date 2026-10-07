@@ -6,7 +6,7 @@ A mensagem vem da sessão (ver Acao::aviso()) e é APAGADA aqui: se ficasse
 lá, voltava a aparecer na página seguinte e na outra a seguir.
 */
 ?>
-<main class="conteudo">
+<main class="contentor conteudo">
 	<?php if(!empty($_SESSION['txt'])): ?>
 	<div class="aviso aviso-<?=esc($_SESSION['tp'] ?? 'info')?>">
 		<?php if(!empty($_SESSION['tt'])): ?><strong><?=esc($_SESSION['tt'])?></strong> <?php endif; ?>
@@ -14,4 +14,10 @@ lá, voltava a aparecer na página seguinte e na outra a seguir.
 	</div>
 	<?php unset($_SESSION['txt'], $_SESSION['tp'], $_SESSION['tt']); endif; ?>
 
-	<?php include _C_._P_.'tema'._P_.$this->ver->viwtema._P_.'extras'._P_.'breadcumb.phtml'; ?>
+	<?php
+	//as páginas que desenham o seu próprio topo (o catálogo, a ficha de um
+	//jogo) dizem-no com $this->ver->semTitulo
+	if(empty($this->ver->semTitulo)){
+		include _C_._P_.'tema'._P_.$this->ver->viwtema._P_.'extras'._P_.'breadcumb.phtml';
+	}
+	?>

@@ -1,0 +1,45 @@
+<?php
+/*
+A página BIOS: cada consola, se precisa de BIOS, e se o site já a tem.
+Sem ficheiros para descarregar -- ver o comentário no BiosControlo.
+*/
+$nomes = ['nao' => 'Não precisa', 'opcional' => 'Opcional', 'obrigatoria' => 'Obrigatória'];
+?>
+<div class="nota" style="margin-top:0">
+	<?=icone('info')?>
+	<div>
+		<strong>Não precisa de descarregar nenhuma BIOS para jogar.</strong> O site entrega-a ao emulador
+		sozinho. Aqui vê de que BIOS cada consola precisa e se o site já a tem.
+		<a href="<?=url_base('como-usar/guia/bios')?>">O que é a BIOS, e como obter a da sua consola</a>.
+	</div>
+</div>
+
+<?php foreach ($this->ver->linhas as $familia => $lista): ?>
+<section class="seccao" style="margin-bottom:32px">
+	<div class="seccao-cabeca"><h2><?=esc($familia)?></h2></div>
+	<div class="guias">
+		<?php foreach ($lista as $chave => $l): $c = $l['consola']; $b = $l['bios'];
+			$estado = $c['bios'] === 'nao' ? 'livre' : ($b ? 'ok' : ($c['bios'] === 'obrigatoria' ? 'falta' : 'opcional'));
+			$tom = ['livre' => '#52525b', 'ok' => '#14b8a6', 'falta' => '#e11d48', 'opcional' => '#f59e0b'][$estado]; ?>
+		<div class="guia" style="--tom: <?=$tom?>">
+			<span class="guia-icone"><?=icone($estado === 'falta' ? 'alerta' : ($estado === 'livre' ? 'certo' : 'chip'))?></span>
+			<h3><?=esc($c['nome'])?></h3>
+			<p>
+				<?php if($estado === 'livre'): ?>
+					Não usa BIOS. Os jogos arrancam directamente.
+				<?php elseif($estado === 'ok'): ?>
+					<span class="estado-ok">Instalada.</span> BIOS <?=esc(mb_strtolower($nomes[$c['bios']]))?>: os jogos já a usam.
+				<?php elseif($estado === 'falta'): ?>
+					<span class="estado-mal">Em falta.</span> Esta consola não arranca sem BIOS: os jogos dela ainda não funcionam.
+				<?php else: ?>
+					Opcional, e não instalada. Os jogos funcionam; com a BIOS original, alguns ficam mais compatíveis.
+				<?php endif; ?>
+			</p>
+			<?php if($this->e_admin() && $c['bios'] !== 'nao'): ?>
+			<a class="ver-todos" href="<?=url_base('admin/emulador')?>"><?=$b ? 'Trocar a BIOS' : 'Enviar a BIOS'?> <?=icone('seta')?></a>
+			<?php endif; ?>
+		</div>
+		<?php endforeach; ?>
+	</div>
+</section>
+<?php endforeach; ?>

@@ -1,0 +1,30 @@
+<?php
+/*
+Editar um jogo: título, consola, descrição, capa e se aparece no
+catálogo. O ficheiro do jogo não se troca aqui -- para isso apaga-se e
+adiciona-se outra vez, que é o mesmo trabalho e não deixa um jogo a meio
+caminho entre dois ficheiros.
+*/
+$jogo = $this->ver->jogo;
+?>
+<form class="cartao" method="post" enctype="multipart/form-data" action="<?=url_base('admin/actualizar/'.(int)$jogo['id_jg'])?>">
+	<?=csrf_field()?>
+
+	<?php include __DIR__.'/_campos.phtml'; ?>
+
+	<?php if(!empty($jogo['capa_jg'])): ?>
+	<div class="capa-actual">
+		<img src="<?=url_base('jogar/capa/'.(int)$jogo['id_jg'])?>" alt="Capa actual">
+		<label><input type="checkbox" name="tirar_capa" value="1"> Tirar a capa</label>
+	</div>
+	<?php endif; ?>
+
+	<label><input type="checkbox" name="visivel" value="1" <?=(int)$jogo['stto_jg'] === 1 ? 'checked' : ''?>> Visível no catálogo</label>
+
+	<p class="ajuda">
+		Ficheiro: <code><?=esc($jogo['nome_jg'])?></code> (<?=esc(Armazem::legivel($jogo['tamanho_jg']))?>)
+		<?php if(!empty($jogo['origem_jg'])): ?><br>Descarregado de: <code><?=esc($jogo['origem_jg'])?></code><?php endif; ?>
+	</p>
+
+	<button type="submit" class="btn btn-largo">Gravar alterações</button>
+</form>

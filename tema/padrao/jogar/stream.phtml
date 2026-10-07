@@ -1,0 +1,180 @@
+<?php
+/*
+A PÁGINA DE UM JOGO QUE CORRE NO SERVIDOR (PS2).
+
+Não há emulador nesta página. Ela:
+
+    1. pede um lugar (POST jogar/pedir/<jogo>);
+    2. pergunta pelo estado de poucos em poucos segundos (POST
+       jogar/estado/<sessão>) -- e cada pergunta é também o sinal de que a
+       pessoa continua aqui (ver Fila::SEM_SINAL);
+    3. quando o nó diz que está pronto, abre-o num <iframe>: é lá dentro
+       que está o cliente de streaming (Selkies), que recebe a imagem e o
+       som e envia o teclado e o comando.
+
+O FECHO NÃO AVISA NINGUÉM, e de propósito: um navigator.sendBeacon ao
+fechar terminava também a sessão de quem só recarregou a página, ou de
+quem abriu o jogo noutra janela e fechou esta. O lugar liberta-se pelo
+silêncio: dois minutos sem sinal.
+*/
+$jogo = $this->ver->jogo;
+$JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+?>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+	<?=head()?>
+	<meta name="theme-color" content="#18181b">
+	<link rel="stylesheet" href="<?=url_versionada('tema/padrao/ext/assets/css/estilo.css')?>">
+</head>
+<body class="palco">
+
+<header class="palco-topo">
+	<a class="btn btn-escuro" href="<?=url_base('jogos/ver/'.(int)$jogo['id_jg'])?>"><?=icone('voltar')?> Voltar</a>
+	<div class="palco-titulo">
+		<strong><?=esc($jogo['titulo_jg'])?></strong>
+		<small><?=esc($this->ver->consola['nome'])?> &middot; a correr no servidor</small>
+	</div>
+	<div class="palco-botoes" id="botoes" hidden>
+		<button type="button" class="btn btn-escuro" id="inteiro">Ecrã inteiro</button>
+		<a class="btn btn-escuro" id="janela" href="#" target="_blank" rel="noopener">Abrir noutra janela</a>
+		<button type="button" class="btn btn-perigo" id="sair">Terminar</button>
+	</div>
+</header>
+
+<section class="palco-espera" id="espera">
+	<h2 id="titulo-estado">A pedir um lugar no servidor...</h2>
+	<p id="texto-estado" class="palco-nota"></p>
+	<div class="progresso" id="progresso" hidden><div></div></div>
+	<p class="palco-nota" id="dica">
+		O jogo corre no nosso servidor e a imagem chega por streaming: o seu computador só
+		recebe o vídeo. Precisa de uma ligação estável (pelo menos 15 Mbps) e de preferência
+		por cabo. Pode jogar com teclado ou com um comando ligado ao computador.
+	</p>
+	<p hidden id="de-novo"><button type="button" class="btn" onclick="location.reload()">Tentar outra vez</button></p>
+</section>
+
+<main class="palco-ecra" id="palco" hidden>
+	<iframe id="ecra" title="Jogo"
+	        allow="autoplay; fullscreen; gamepad; clipboard-read; clipboard-write; keyboard-map"
+	        allowfullscreen></iframe>
+</main>
+
+<script>
+(function () {
+	var URL_PEDIR   = <?=json_encode(url_base('jogar/pedir/'.(int)$jogo['id_jg']), $JSON)?>;
+	var URL_ESTADO  = <?=json_encode(url_base('jogar/estado/'), $JSON)?>;
+	var URL_SAIR    = <?=json_encode(url_base('jogar/terminar/'), $JSON)?>;
+	var URL_JOGOS   = <?=json_encode(url_base('jogos/ver/'.(int)$jogo['id_jg']), $JSON)?>;
+	var CSRF        = <?=json_encode(csrf_token(), $JSON)?>;
+
+	var sessao = null, aJogar = false, acabou = false;
+	var el = function (id) { return document.getElementById(id); };
+
+	function post(url) {
+		return fetch(url, {
+			method: 'POST', credentials: 'same-origin',
+			headers: { 'X-CSRF-Token': CSRF }
+		}).then(function (r) {
+			return r.json().catch(function () { return { erro: 'Resposta inesperada do servidor. A sessão pode ter expirado: recarregue a página.' }; })
+			            .then(function (d) { d._codigo = r.status; return d; });
+		});
+	}
+
+	function mostrar(titulo, texto) {
+		el('titulo-estado').textContent = titulo;
+		el('texto-estado').textContent = texto || '';
+	}
+
+	function fim(titulo, texto) {
+		acabou = true;
+		el('palco').hidden = true;
+		el('botoes').hidden = true;
+		el('espera').hidden = false;
+		el('progresso').hidden = true;
+		el('dica').hidden = true;
+		el('de-novo').hidden = false;
+		el('ecra').removeAttribute('src');
+		mostrar(titulo, texto);
+	}
+
+	function tratar(d) {
+		if (d.erro) { fim('Não foi possível jogar', d.erro); return; }
+
+		switch (d.estado) {
+			case 'fila':
+				mostrar(
+					d.posicao > 1 ? 'Está na fila: há ' + (d.posicao - 1) + ' pessoa(s) à sua frente' : 'É o próximo a jogar',
+					d.mensagem || 'Os lugares do servidor estão todos ocupados. Entra assim que um ficar livre: não feche esta página.'
+				);
+				break;
+
+			case 'a_preparar':
+				mostrar('A preparar o jogo...', d.mensagem || '');
+				if (typeof d.progresso === 'number') {
+					el('progresso').hidden = false;
+					el('progresso').firstElementChild.style.width = Math.round(d.progresso * 100) + '%';
+				}
+				break;
+
+			case 'a_jogar':
+				if (!aJogar && d.url) {
+					aJogar = true;
+					el('espera').hidden = true;
+					el('palco').hidden = false;
+					el('botoes').hidden = false;
+					el('ecra').src = d.url;
+					el('janela').href = d.url;
+				}
+				break;
+
+			case 'terminada':
+				fim('A sessão terminou', d.mensagem || '');
+				break;
+
+			default:
+				fim('Não foi possível jogar', d.mensagem || 'O servidor de jogo não conseguiu arrancar o jogo.');
+		}
+	}
+
+	/*
+	A cadência: depressa enquanto se espera (a fila anda com estas
+	perguntas), devagar durante o jogo (aí é só o sinal de vida, e cada
+	pergunta custa uma ida à base de dados).
+	*/
+	function ciclo() {
+		if (acabou || sessao === null) { return; }
+		post(URL_ESTADO + sessao).then(function (d) {
+			tratar(d);
+		}).catch(function () {
+			//falha de rede: não desiste, tenta na próxima volta
+		}).then(function () {
+			if (!acabou) { setTimeout(ciclo, aJogar ? 20000 : 3000); }
+		});
+	}
+
+	post(URL_PEDIR).then(function (d) {
+		if (d.sessao) { sessao = d.sessao; }
+		tratar(d);
+		if (!acabou) { setTimeout(ciclo, 3000); }
+	}).catch(function () {
+		fim('Não foi possível jogar', 'Sem ligação ao site. Verifique a internet e tente outra vez.');
+	});
+
+	el('sair').addEventListener('click', function () {
+		if (!confirm('Terminar o jogo? O que não estiver gravado no cartão de memória perde-se.')) { return; }
+		acabou = true;
+		post(URL_SAIR + sessao).then(function () { location.href = URL_JOGOS; });
+	});
+
+	el('inteiro').addEventListener('click', function () {
+		var f = el('ecra');
+		(f.requestFullscreen || f.webkitRequestFullscreen).call(f);
+	});
+
+	//o foco no iframe, para o teclado ir para o jogo e não para esta página
+	el('ecra').addEventListener('load', function () { el('ecra').focus(); });
+})();
+</script>
+</body>
+</html>

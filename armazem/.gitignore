@@ -1,0 +1,5 @@
+# Os jogos, as capas e as BIOS são de cada instalação -- e pesados.
+# Fica só a trava (.htaccess) e este ficheiro.
+*
+!.htaccess
+!.gitignore

@@ -16,7 +16,7 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 
 # E as pastas de código nunca são servidas como páginas.
-RewriteCond $1 !^(app|lib|vdr|tema|instalar|instalacao|migrations|robots\.txt)
+RewriteCond $1 !^(app|lib|vdr|tema|instalar|instalacao|migrations|armazem|no-de-jogo|robots\.txt)
 
 RewriteRule ^(.+)$ index.php/$1 [L]
 

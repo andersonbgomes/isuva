@@ -1,11 +1,34 @@
 # Este projecto
 
-PHP, MVC simples, **sem framework**. Nasceu do esqueleto `MVC` — ver o
-`LEIA-ME.md` para a planta da casa.
+Um site de jogos retro: catálogo gerido por um administrador. A maior
+parte das consolas (Nintendo, Sega, PS1, PSP) corre **no browser de quem
+joga**, pelo EmulatorJS. A PS2 corre **num nó de jogo** (máquina com GPU)
+e chega por streaming. PHP, MVC simples, **sem framework**; ver o
+`LEIA-ME.md`.
 
-> Ao começar um projecto a partir daqui, substituir este primeiro
-> parágrafo pelo que o projecto é, em duas linhas. O resto do ficheiro
-> vale para qualquer um.
+O domínio dos jogos vive em `lib/jogos/`:
+
+- `Consolas.php`: que consolas, que núcleo, que extensões, e o `modo`
+  (`browser` ou `servidor`);
+- `Armazem.php`: os ficheiros no disco, os envios aos pedaços, e servir
+  com Range;
+- `Descarga.php`: importar por link, com protecção SSRF;
+- `Bios.php`;
+- `Fila.php`: as sessões nos nós, a fila, os lugares abandonados;
+- `Agente.php`: os pedidos assinados ao nó, e os endereços assinados que
+  o nó usa para descarregar daqui;
+- `Guias.php`: o texto do "Como usar", um guia por cartão. As tabelas
+  de formatos e de BIOS saem do `Consolas.php`, e as teclas de
+  `Guias::teclas()`. Mudar as teclas no EmulatorJS ou no PCSX2 obriga a
+  mudar essa lista também;
+- `Gravacoes.php`: as gravações de cada conta (sram, estados, cartão da
+  PS2). Do lado do browser, `tema/padrao/ext/assets/js/gravacoes.js`.
+  Do lado do nó, `trazer_cartao`/`devolver_cartao` no `agente.py`.
+
+`no-de-jogo/` é o programa da máquina com GPU (Python, Docker, nginx).
+Não corre no site, e o site não o serve. A assinatura HMAC dos pedidos
+tem de ser igual nos dois lados (`Agente::assinar()` e `assinar()` no
+`agente.py`): mudar uma é mudar as duas.
 
 ## Estrutura
 
@@ -18,9 +41,16 @@ PHP, MVC simples, **sem framework**. Nasceu do esqueleto `MVC` — ver o
 - `lib/ajuda/_values_.php` — as funções globais (`url_base()`, `esc()`,
   `csrf_*()`, `nlog()`).
 - `lib/ajuda/head.php` — o `<head>` e o título de cada rota.
+- `lib/ajuda/icones.php` — `icone('nome')`, os ícones do tema (Lucide, em linha).
 - `tema/` — os temas. O activo vem da definição `tema` (`app_config`).
 - `instalacao/instalacao.sql` — o que monta uma base de dados de raiz.
 - `migrations/` — as alterações à base de dados, uma por ficheiro.
+- `armazem/` — os jogos, capas e BIOS enviados (fora do git, fechado ao
+  exterior). Nada daqui é servido directamente: sai tudo pelo
+  `JogarControlo` (depois de verificar a sessão) ou pelo `NoControlo`
+  (endereço assinado, para o nó de jogo).
+- `no-de-jogo/` — o agente do nó de jogo e a imagem Docker da PS2. Tem o
+  seu `LEIA-ME.md`; validar com `python3 -m py_compile` antes de commitar.
 
 O construtor de `Acao` exige sessão iniciada em todos os controladores
 excepto os da lista `Acao::SEM_SESSAO`.
@@ -36,6 +66,13 @@ excepto os da lista `Acao::SEM_SESSAO`.
 4. A tabela em `migrations/` **e** em `instalacao/instalacao.sql`.
 5. Um `case` em `lib/ajuda/head.php` (título) e uma linha em
    `tema/<tema>/extras/leftsidebar.phtml` (menu).
+
+## BIOS: nunca para descarregar
+
+As BIOS têm direitos de autor. O site entrega-as **ao emulador**
+(`JogarControlo::bios`, `NoControlo::bios`), e a página `/bios` só diz o
+estado de cada consola. Não se acrescenta um botão de descarregar BIOS,
+nem uma lista de links para sites que as oferecem.
 
 ## Segurança — aplicar sempre
 

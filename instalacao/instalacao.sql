@@ -49,7 +49,9 @@ INSERT INTO `app_config` (`conf_chave`, `conf_valor`) VALUES
   ('tit',       'A Minha Aplicação'),
   ('descricao', 'Aplicação criada a partir do esqueleto MVC.'),
   ('tema',      'padrao'),
-  ('url',       '')
+  ('url',       ''),
+  -- de onde o browser carrega o EmulatorJS (Admin > Emulador)
+  ('emu_dados', 'https://cdn.emulatorjs.org/stable/data/')
 ON DUPLICATE KEY UPDATE `conf_valor` = `conf_valor`;
 
 
@@ -82,6 +84,126 @@ CREATE TABLE IF NOT EXISTS `app_utilizador` (
 -- ---------------------------------------------------------------------------
 -- As tabelas do projecto entram abaixo desta linha.
 -- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- app_jogo — um jogo do catálogo
+-- ---------------------------------------------------------------------------
+--   consola_jg   a chave da consola em lib/jogos/Consolas.php (psx, snes, ...)
+--   ficheiro_jg  o nome NO DISCO, aleatório, dentro de armazem/jogos/
+--   nome_jg      o nome original, com a extensão — vai no fim do endereço,
+--                porque é por ele que o EmulatorJS escolhe o que arrancar
+--   origem_jg    o link de onde foi descarregado, quando veio por link
+--   capa_jg      o nome no disco da capa, dentro de armazem/capas/
+--   stto_jg      1 visível no catálogo, 0 escondido
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `app_jogo` (
+  `id_jg`        int NOT NULL AUTO_INCREMENT,
+  `titulo_jg`    varchar(150) NOT NULL,
+  `consola_jg`   varchar(20) NOT NULL,
+  `ficheiro_jg`  varchar(64) NOT NULL,
+  `nome_jg`      varchar(190) NOT NULL,
+  `tamanho_jg`   bigint NOT NULL DEFAULT 0,
+  `origem_jg`    varchar(500) DEFAULT NULL,
+  `capa_jg`      varchar(64) DEFAULT NULL,
+  `descricao_jg` text DEFAULT NULL,
+  `stto_jg`      int NOT NULL DEFAULT 1,
+  `us_jg`        int DEFAULT NULL,
+  `dtc_jg`       datetime DEFAULT NULL,
+  PRIMARY KEY (`id_jg`),
+  KEY `consola_jg` (`consola_jg`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+-- ---------------------------------------------------------------------------
+-- app_no — um nó de jogo: uma máquina com placa gráfica que corre os
+-- emuladores de 'servidor' (PS2) e envia a imagem por streaming
+-- ---------------------------------------------------------------------------
+--   api_no         o endereço da API do agente (ex.: https://no1.site.ao:7443)
+--   publico_no     o endereço por onde os jogadores lá chegam, sem porta
+--                  (ex.: https://no1.site.ao)
+--   porta_no       a porta do lugar 0; o lugar N fica em porta_no + N
+--   capacidade_no  quantos jogadores ao mesmo tempo
+--   segredo_no     o segredo partilhado com o agente: assina os pedidos
+--                  do site ao nó e os endereços dos ficheiros que o nó
+--                  descarrega daqui
+--   stto_no        1 activo, 0 desligado (não recebe sessões novas)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `app_no` (
+  `id_no`         int NOT NULL AUTO_INCREMENT,
+  `nome_no`       varchar(100) NOT NULL,
+  `api_no`        varchar(255) NOT NULL,
+  `publico_no`    varchar(255) NOT NULL,
+  `porta_no`      int NOT NULL DEFAULT 8443,
+  `capacidade_no` int NOT NULL DEFAULT 1,
+  `segredo_no`    varchar(128) NOT NULL,
+  `stto_no`       int NOT NULL DEFAULT 1,
+  `dtc_no`        datetime DEFAULT NULL,
+  PRIMARY KEY (`id_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ---------------------------------------------------------------------------
+-- app_sessao — um jogador a jogar (ou à espera de jogar) num nó
+-- ---------------------------------------------------------------------------
+--   estado_ss   fila | a_preparar | a_jogar | terminada | erro
+--   no_ss       o nó que a recebeu (NULL enquanto está na fila)
+--   slot_ss     o lugar dentro do nó (define a porta)
+--   token_ss    a chave de entrada no nó, só desta sessão
+--   vivo_ss     a última vez que a página do jogador deu sinal: sem sinal
+--               durante uns minutos, a sessão acaba e o lugar liberta-se
+--   vivo_no_ss  a última vez que esse sinal foi passado ao nó
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `app_sessao` (
+  `id_ss`       int NOT NULL AUTO_INCREMENT,
+  `us_ss`       int NOT NULL,
+  `jogo_ss`     int NOT NULL,
+  `no_ss`       int DEFAULT NULL,
+  `slot_ss`     int DEFAULT NULL,
+  `estado_ss`   varchar(16) NOT NULL DEFAULT 'fila',
+  `token_ss`    varchar(64) NOT NULL,
+  `msg_ss`      varchar(255) DEFAULT NULL,
+  `vivo_ss`     datetime DEFAULT NULL,
+  `vivo_no_ss`  datetime DEFAULT NULL,
+  `dtc_ss`      datetime DEFAULT NULL,
+  `fim_ss`      datetime DEFAULT NULL,
+  PRIMARY KEY (`id_ss`),
+  KEY `estado_ss` (`estado_ss`),
+  KEY `us_ss` (`us_ss`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+-- ---------------------------------------------------------------------------
+-- app_gravacao — as gravações de cada conta, guardadas no servidor
+-- ---------------------------------------------------------------------------
+--   tipo_gv     sram    a gravação do próprio jogo (o "cartão de memória"
+--                       das consolas de browser), uma por jogo
+--               estado  um estado guardado pelo botão do emulador, até 9
+--                       por jogo (slot_gv 1..9)
+--               cartao  o cartão de memória da PS2, um por consola (jogo_gv 0):
+--                       na PS2 um cartão serve para todos os jogos
+--   jogo_gv     o jogo, ou 0 quando a gravação é da consola (cartao)
+--   ficheiro_gv o nome no disco, aleatório, dentro de armazem/gravacoes/
+--
+-- A chave única é o que faz "gravar" substituir a anterior em vez de
+-- acumular cópias: há uma linha por conta + tipo + consola + jogo + lugar.
+-- jogo_gv é 0 e não NULL por causa disto -- no MySQL dois NULL nunca são
+-- iguais, e a chave única deixava passar cartões repetidos.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `app_gravacao` (
+  `id_gv`          int NOT NULL AUTO_INCREMENT,
+  `us_gv`          int NOT NULL,
+  `tipo_gv`        varchar(10) NOT NULL,
+  `consola_gv`     varchar(20) NOT NULL,
+  `jogo_gv`        int NOT NULL DEFAULT 0,
+  `slot_gv`        int NOT NULL DEFAULT 0,
+  `ficheiro_gv`    varchar(64) NOT NULL,
+  `tamanho_gv`     bigint NOT NULL DEFAULT 0,
+  `actualizado_gv` datetime DEFAULT NULL,
+  PRIMARY KEY (`id_gv`),
+  UNIQUE KEY `gravacao_unica` (`us_gv`, `tipo_gv`, `consola_gv`, `jogo_gv`, `slot_gv`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 SET FOREIGN_KEY_CHECKS = 1;

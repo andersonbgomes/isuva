@@ -1,16 +1,47 @@
 <?php
 /*
-A barra de cima: o nome do sistema e quem está dentro.
+O cabeçalho: a pesquisa de jogos e o menu de quem está dentro.
+
+A pesquisa é um formulário GET para o catálogo (/jogos?q=...): funciona
+em qualquer página, e sem JavaScript.
+
+O menu é um <details>: abre e fecha sem JavaScript nenhum. O pequeno
+script de baixo só o fecha quando se clica fora dele -- sem isso
+ficava aberto até se voltar a clicar no botão.
 */
 $eu = $this->ver->usuario ?? [];
+$nome = trim((string)($eu['nome_us'] ?? ''));
+$inicial = $nome !== '' ? mb_strtoupper(mb_substr($nome, 0, 1)) : '?';
 ?>
-<header class="topo">
-	<a class="topo-marca" href="<?=url_base('')?>"><?=esc(configura('tit'))?></a>
+<header class="contentor topo">
+	<form class="pesquisa" method="get" action="<?=url_base('jogos')?>" role="search">
+		<?=icone('procurar')?>
+		<input type="text" name="q" value="<?=esc(rota === 'jogos' ? ($_GET['q'] ?? '') : '')?>"
+		       placeholder="Procurar jogos..." maxlength="100" aria-label="Procurar jogos">
+	</form>
 
-	<div class="topo-direita">
-		<?php if(!empty($eu)): ?>
-		<span class="topo-quem"><?=esc($eu['nome_us'] ?? '')?></span>
-		<a class="btn btn-claro" href="<?=url_base('sair')?>">Sair</a>
-		<?php endif; ?>
-	</div>
+	<?php if(!empty($eu)): ?>
+	<details class="eu">
+		<summary aria-label="Menu da conta">
+			<span class="eu-avatar"><?=esc($inicial)?></span>
+			<span class="eu-nome"><?=esc($nome)?></span>
+			<?=icone('abaixo')?>
+		</summary>
+		<div class="eu-menu" role="menu">
+			<small><?=esc($eu['email_us'] ?? '')?></small>
+			<a role="menuitem" href="<?=url_base('gravacoes')?>"><?=icone('gravar')?> As minhas gravações</a>
+			<a role="menuitem" href="<?=url_base('como-usar')?>"><?=icone('livro')?> Como usar</a>
+			<?php if($this->e_admin()): ?>
+			<a role="menuitem" href="<?=url_base('admin')?>"><?=icone('grelha')?> Gerir jogos</a>
+			<?php endif; ?>
+			<a role="menuitem" href="<?=url_base('sair')?>"><?=icone('sair')?> Sair</a>
+		</div>
+	</details>
+	<script>
+	document.addEventListener('click', function (e) {
+		var m = document.querySelector('.eu');
+		if (m && m.open && !m.contains(e.target)) { m.open = false; }
+	});
+	</script>
+	<?php endif; ?>
 </header>

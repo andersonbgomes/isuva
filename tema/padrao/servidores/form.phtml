@@ -1,0 +1,41 @@
+<?php
+/*
+Acrescentar ou editar um nó de jogo. Os mesmos campos nos dois casos;
+muda só para onde o formulário vai.
+*/
+$no = $this->ver->no;
+$accao = $this->ver->novo ? url_base('servidores/guardar') : url_base('servidores/actualizar/'.(int)$no['id_no']);
+?>
+<form class="cartao" method="post" action="<?=$accao?>">
+	<?=csrf_field()?>
+
+	<label for="nome">Nome</label>
+	<input type="text" id="nome" name="nome" required maxlength="100" value="<?=esc($no['nome_no'])?>" placeholder="ex.: Nó 1 (Lisboa)">
+
+	<label for="api">Endereço da API do agente</label>
+	<input type="text" id="api" name="api" required maxlength="255" value="<?=esc($no['api_no'])?>">
+	<p class="ajuda">Só máquina e porta, ex.: <code>https://no1.exemplo.ao:7443</code>. É por aqui que o site fala com o nó.</p>
+
+	<label for="publico">Endereço público</label>
+	<input type="text" id="publico" name="publico" required maxlength="255" value="<?=esc($no['publico_no'])?>">
+	<p class="ajuda">
+		Por onde os jogadores chegam ao nó, sem porta: ex.: <code>https://no1.exemplo.ao</code>.
+		De preferência um subdomínio deste site: assim o browser trata o jogo como parte do site.
+	</p>
+
+	<label for="porta">Porta do primeiro lugar</label>
+	<input type="number" id="porta" name="porta" required min="1" max="65535" value="<?=(int)$no['porta_no']?>">
+	<p class="ajuda">O lugar 1 usa esta porta, o lugar 2 a seguinte, e por aí fora. Tem de bater com o <code>porta_base</code> do agente.</p>
+
+	<label for="capacidade">Jogadores ao mesmo tempo</label>
+	<input type="number" id="capacidade" name="capacidade" required min="1" max="64" value="<?=(int)$no['capacidade_no']?>">
+	<p class="ajuda">Numa máquina com uma RTX 3060 e um processador de 8 núcleos, comece com 2 e meça.</p>
+
+	<label for="segredo">Segredo partilhado</label>
+	<input type="text" id="segredo" name="segredo" required maxlength="128" value="<?=esc($no['segredo_no'])?>" autocomplete="off" spellcheck="false">
+	<p class="ajuda">Copie-o para o <code>segredo</code> da configuração do agente. Gerado ao acaso: não o troque por um mais curto.</p>
+
+	<label><input type="checkbox" name="activo" value="1" <?=(int)$no['stto_no'] === 1 ? 'checked' : ''?>> Activo (recebe jogadores)</label>
+
+	<button type="submit" class="btn btn-largo">Gravar</button>
+</form>

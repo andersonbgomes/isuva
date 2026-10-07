@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=PCSX2 (isuva)
+Comment=Arranca o jogo da sessão assim que o ambiente de trabalho abre
+Exec=/usr/local/bin/arrancar-pcsx2.sh
+X-KDE-autostart-phase=2
+NoDisplay=true

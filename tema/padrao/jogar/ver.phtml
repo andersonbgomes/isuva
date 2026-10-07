@@ -1,0 +1,91 @@
+<?php
+/*
+A PÁGINA DO JOGO. Sem a moldura do site: o emulador quer o ecrã todo.
+
+Tudo o que o EmulatorJS precisa de saber vem do JogarControlo::ver(), em
+$this->ver->emu, e passa para o JavaScript por json_encode() -- nunca
+colado como texto. Um título com uma aspa ou um </script> lá dentro
+partia a página (ou pior, corria código); com json_encode e as flags
+JSON_HEX_* sai sempre como uma string JavaScript válida e inofensiva.
+
+O loader.js é que vai buscar o resto (o emulator.js e o núcleo da
+consola) à mesma pasta, e o núcleo é que descarrega o jogo do endereço
+em EJS_gameUrl.
+*/
+$jogo = $this->ver->jogo;
+$emu  = $this->ver->emu;
+$JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+?>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+	<?=head()?>
+	<meta name="theme-color" content="#18181b">
+	<link rel="stylesheet" href="<?=url_versionada('tema/padrao/ext/assets/css/estilo.css')?>">
+</head>
+<body class="palco">
+
+<header class="palco-topo">
+	<a class="btn btn-escuro" href="<?=url_base('jogos/ver/'.(int)$jogo['id_jg'])?>"><?=icone('voltar')?> Voltar</a>
+	<div class="palco-titulo">
+		<strong><?=esc($jogo['titulo_jg'])?></strong>
+		<small><?=esc($this->ver->consola['nome'])?></small>
+	</div>
+</header>
+
+<div class="palco-aviso" id="aviso" hidden></div>
+
+<main class="palco-ecra">
+	<div id="jogo"></div>
+</main>
+
+<p class="palco-nota">
+	<?=esc($this->ver->consola['nota'])?>
+	O jogo corre no seu browser. As gravações ficam guardadas na sua conta, no servidor:
+	pode continuar noutro computador.
+	Os controlos (teclado ou comando) mudam-se no ícone de comando, na barra do emulador.
+</p>
+
+<script>
+(function () {
+	var cfg = <?=json_encode($emu, $JSON)?>;
+
+	/*
+	O PSP precisa de threads, e as threads precisam de uma página
+	"isolada". O servidor manda os cabeçalhos (JogarControlo::isolar()),
+	mas há browsers que não os conhecem -- é melhor dizer já do que deixar
+	o emulador falhar com uma mensagem em inglês.
+	*/
+	if (cfg.threads && !window.crossOriginIsolated) {
+		var a = document.getElementById('aviso');
+		a.textContent = 'Este browser não permite correr esta consola (falta-lhe suporte a threads). Experimente o Chrome, o Edge ou o Firefox, actualizados.';
+		a.hidden = false;
+	}
+
+	window.EJS_player     = '#jogo';
+	window.EJS_core       = cfg.core;
+	window.EJS_pathtodata = cfg.pathtodata;
+	window.EJS_gameUrl    = cfg.gameUrl;
+	window.EJS_gameName   = cfg.gameName;
+	window.EJS_gameID     = cfg.gameID;
+	window.EJS_language   = 'pt-BR';
+	window.EJS_color      = '#14b8a6';
+	if (cfg.biosUrl) { window.EJS_biosUrl = cfg.biosUrl; }
+	if (cfg.threads) { window.EJS_threads = true; }
+
+	/*
+	A gravação do jogo de minuto a minuto (o EmulatorJS vem com 5): é
+	esse o ritmo a que ela sobe para o servidor (gravacoes.js), e o máximo
+	que se perde se o computador se desligar a meio.
+	*/
+	window.EJS_defaultOptions = { 'save-save-interval': '60' };
+
+	window.ISUVA_GRAVACOES = <?=json_encode($this->ver->gravacoes, $JSON)?>;
+})();
+</script>
+<!-- antes do loader.js: o loader só liga os EJS_on* que já existirem -->
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/envio.js')?>"></script>
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/gravacoes.js')?>"></script>
+<script src="<?=esc($emu['pathtodata'])?>loader.js"></script>
+</body>
+</html>

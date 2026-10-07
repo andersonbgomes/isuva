@@ -1,0 +1,25 @@
+<?php
+/*
+Os guias, em cartões, agrupados ("Começar", "Consolas", "Administração").
+A cor de cada cartão vem do guia ('tom'), por uma variável de CSS.
+*/
+?>
+<p class="texto-fraco" style="max-width:720px;margin-top:-8px">
+	Tudo o que precisa de saber para jogar aqui: escolha um tema. Cada guia explica passo a passo.
+</p>
+
+<?php foreach (Guias::GRUPOS as $grupo): if(empty($this->ver->grupos[$grupo])){ continue; } ?>
+<section class="seccao">
+	<div class="seccao-cabeca"><h2><?=esc($grupo)?></h2></div>
+	<div class="guias">
+		<?php foreach ($this->ver->grupos[$grupo] as $chave => $g): ?>
+		<a class="guia" href="<?=url_base('como-usar/guia/'.$chave)?>" style="--tom: <?=esc($g['tom'])?>">
+			<span class="guia-icone"><?=icone($g['icone'])?></span>
+			<h3><?=esc($g['titulo'])?></h3>
+			<p><?=esc($g['resumo'])?></p>
+			<span class="ver-todos">Ler o guia <?=icone('seta')?></span>
+		</a>
+		<?php endforeach; ?>
+	</div>
+</section>
+<?php endforeach; ?>

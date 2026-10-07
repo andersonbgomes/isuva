@@ -1,0 +1,176 @@
+<?php
+/*
+ADICIONAR UM JOGO: por ficheiro (enviado aos pedaços) ou por link.
+
+O ficheiro NÃO vai dentro do formulário. Assim que é escolhido, o
+JavaScript abaixo envia-o aos pedaços para admin/pedaco, e o formulário
+só leva o identificador do envio no campo escondido "envio". É a única
+forma de uma ISO de 1 GB passar por um servidor com post_max_size de 8 MB.
+
+O link, ao contrário, vai no formulário: quem descarrega é o servidor,
+ao gravar (ver lib/jogos/Descarga.php).
+*/
+?>
+<form class="cartao" id="form-jogo" method="post" enctype="multipart/form-data" action="<?=url_base('admin/guardar')?>">
+	<?=csrf_field()?>
+	<input type="hidden" name="envio" id="envio" value="">
+
+	<?php $jogo = []; include __DIR__.'/_campos.phtml'; ?>
+
+	<label>De onde vem o jogo</label>
+	<div class="escolha">
+		<label><input type="radio" name="origem" value="ficheiro" checked> Um ficheiro do meu computador</label>
+		<label><input type="radio" name="origem" value="link"> Um link de descarga</label>
+	</div>
+
+	<div id="por-ficheiro">
+		<label for="ficheiro">Ficheiro do jogo <span class="texto-fraco" id="limite"></span></label>
+		<!-- sem name: o ficheiro não vai no formulário, vai aos pedaços -->
+		<input type="file" id="ficheiro">
+		<div class="progresso" id="progresso" hidden><div></div></div>
+		<p class="ajuda" id="estado-envio"></p>
+	</div>
+
+	<div id="por-link" hidden>
+		<?php if(!$this->ver->temCurl): ?>
+		<div class="aviso aviso-warning">Este servidor não tem a extensão <code>curl</code> do PHP: a descarga por link não vai funcionar.</div>
+		<?php endif; ?>
+		<label for="link">Link de descarga directa</label>
+		<input type="text" id="link" name="link" maxlength="500" placeholder="https://...">
+		<p class="ajuda">
+			Tem de ser um link que descarregue o ficheiro directamente. Páginas com botão
+			"Download" (Google Drive, Mega) normalmente não servem. O servidor descarrega
+			o ficheiro e guarda-o aqui: pode levar alguns minutos.
+		</p>
+
+		<label for="nome_ficheiro">Nome do ficheiro <span class="texto-fraco">(opcional)</span></label>
+		<input type="text" id="nome_ficheiro" name="nome_ficheiro" maxlength="180" placeholder="ex.: Crash Bandicoot.chd">
+		<p class="ajuda">Só é preciso se o link não der o nome com a extensão certa.</p>
+	</div>
+
+	<button type="submit" class="btn btn-largo" id="gravar">Gravar</button>
+</form>
+
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/envio.js')?>"></script>
+<script>
+(function () {
+	var form      = document.getElementById('form-jogo');
+	var csrf      = form.querySelector('[name=csrf_token]').value;
+	var consola   = document.getElementById('consola');
+	var ficheiro  = document.getElementById('ficheiro');
+	var envio     = document.getElementById('envio');
+	var barra     = document.getElementById('progresso');
+	var estado    = document.getElementById('estado-envio');
+	var gravar    = document.getElementById('gravar');
+	var porLink   = document.getElementById('por-link');
+	var porFich   = document.getElementById('por-ficheiro');
+	var URL_INICIAR = <?=json_encode(url_base('admin/iniciar'), JSON_HEX_TAG | JSON_UNESCAPED_SLASHES)?>;
+	var URL_PEDACO  = <?=json_encode(url_base('admin/pedaco'), JSON_HEX_TAG | JSON_UNESCAPED_SLASHES)?>;
+
+	var aEnviar = false;   //há um envio a decorrer
+	var vez = 0;           //cada ficheiro escolhido é uma "vez"; um envio antigo pára quando a vez muda
+
+	function origem() { return form.querySelector('[name=origem]:checked').value; }
+
+	function actualizarBotao() {
+		gravar.disabled = origem() === 'ficheiro' && (aEnviar || envio.value === '');
+	}
+
+	form.querySelectorAll('[name=origem]').forEach(function (r) {
+		r.addEventListener('change', function () {
+			porLink.hidden = origem() !== 'link';
+			porFich.hidden = origem() !== 'ficheiro';
+			actualizarBotao();
+		});
+	});
+
+	function dizer(texto, erro) {
+		estado.textContent = texto;
+		estado.className = 'ajuda' + (erro ? ' erro' : '');
+	}
+
+	async function enviar(f, minhaVez) {
+		var id = await enviarAosPedacos({
+			ficheiro:  f,
+			campos:    { consola: consola.value },
+			csrf:      csrf,
+			iniciar:   URL_INICIAR,
+			pedaco:    URL_PEDACO,
+			aviso:     dizer,
+			parar:     function () { return minhaVez !== vez; },   //escolheram outro ficheiro entretanto
+			progresso: function (pct) {
+				barra.firstElementChild.style.width = pct + '%';
+				dizer('A enviar... ' + pct + '%');
+			}
+		});
+		if (id === null) { return; }
+
+		envio.value = id;
+		dizer('Enviado. Já pode gravar.');
+	}
+
+	async function comecar() {
+		var f = ficheiro.files[0];
+		envio.value = '';
+		vez++;
+		if (!f) { dizer(''); barra.hidden = true; actualizarBotao(); return; }
+
+		if (!consola.value) {
+			dizer('Escolha a consola primeiro, e depois o ficheiro.', true);
+			ficheiro.value = '';
+			return;
+		}
+
+		var minhaVez = vez;
+		aEnviar = true;
+		barra.hidden = false;
+		barra.firstElementChild.style.width = '0%';
+		actualizarBotao();
+
+		try {
+			await enviar(f, minhaVez);
+		} catch (e) {
+			if (minhaVez === vez) { dizer(e.message, true); }
+		}
+		if (minhaVez === vez) { aEnviar = false; actualizarBotao(); }
+	}
+
+	ficheiro.addEventListener('change', comecar);
+
+	//o limite de tamanho depende da consola (data-max em _campos.phtml)
+	function mostrarLimite() {
+		var o = consola.options[consola.selectedIndex];
+		document.getElementById('limite').textContent = o && o.dataset.maxTexto ? '(até ' + o.dataset.maxTexto + ')' : '';
+	}
+	consola.addEventListener('change', mostrarLimite);
+	mostrarLimite();
+
+	//a consola mudou depois do envio: avisa já se o ficheiro deixou de servir
+	consola.addEventListener('change', function () {
+		var f = ficheiro.files[0], o = consola.options[consola.selectedIndex];
+		if (!f || !o.dataset.ext) { return; }
+		var ext = f.name.split('.').pop().toLowerCase();
+		if (o.dataset.ext.split(',').indexOf(ext) === -1) {
+			dizer('Um ficheiro .' + ext + ' não serve para ' + o.textContent + '.', true);
+		}
+	});
+
+	form.addEventListener('submit', function (e) {
+		if (origem() === 'ficheiro' && envio.value === '') {
+			e.preventDefault();
+			dizer('Espere que o envio chegue aos 100%.', true);
+			return;
+		}
+		gravar.disabled = true;
+		gravar.textContent = origem() === 'link' ? 'A descarregar o jogo... pode levar alguns minutos' : 'A gravar...';
+	});
+
+	//sair a meio de um envio perde-o
+	window.addEventListener('beforeunload', function (e) {
+		if (aEnviar) { e.preventDefault(); e.returnValue = ''; }
+	});
+	form.addEventListener('submit', function () { aEnviar = false; });
+
+	actualizarBotao();
+})();
+</script>

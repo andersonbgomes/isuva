@@ -1,0 +1,60 @@
+<?php
+/*
+As gravações da conta: o que está guardado, de que jogo, de quando, e
+quanto ocupa. Descarregar serve para guardar uma cópia à parte; apagar
+liberta espaço (cada conta tem Gravacoes::QUOTA).
+*/
+$tipos = ['sram' => 'Gravação do jogo', 'estado' => 'Estado', 'cartao' => 'Cartão de memória'];
+$pct = min(100, round($this->ver->usado / Gravacoes::QUOTA * 100));
+?>
+<div class="cartao">
+	<p class="texto-fraco">
+		O progresso dos seus jogos fica guardado aqui, na sua conta: pode continuar noutro computador.
+		Usa <?=esc(Armazem::legivel($this->ver->usado))?> de <?=esc(Armazem::legivel(Gravacoes::QUOTA))?>.
+	</p>
+	<div class="progresso"><div style="width: <?=(int)$pct?>%"></div></div>
+</div>
+
+<div class="cartao">
+	<?php if(empty($this->ver->gravacoes)): ?>
+	<p class="texto-fraco">Ainda não tem gravações. Comece um jogo e grave dentro dele, ou use o botão
+		"Guardar estado" do emulador.</p>
+	<?php else: ?>
+	<div class="tabela-rola">
+	<table>
+		<thead>
+			<tr><th>Jogo</th><th>O quê</th><th>Tamanho</th><th>Gravado em</th><th></th></tr>
+		</thead>
+		<tbody>
+			<?php foreach ($this->ver->gravacoes as $g): ?>
+			<tr>
+				<td>
+					<?php if($g['tipo_gv'] === 'cartao'): ?>
+						<?=esc(Consolas::nome($g['consola_gv']))?> <span class="texto-fraco">(todos os jogos)</span>
+					<?php elseif($g['titulo_jg'] !== null): ?>
+						<a href="<?=url_base('jogos/ver/'.(int)$g['jogo_gv'])?>"><?=esc($g['titulo_jg'])?></a>
+					<?php else: ?>
+						<span class="texto-fraco">Jogo que já saiu do catálogo</span>
+					<?php endif; ?>
+				</td>
+				<td>
+					<?=esc($tipos[$g['tipo_gv']] ?? $g['tipo_gv'])?>
+					<?php if($g['tipo_gv'] === 'estado'): ?> <?=(int)$g['slot_gv']?><?php endif; ?>
+				</td>
+				<td><?=esc(Armazem::legivel($g['tamanho_gv']))?></td>
+				<td><?=esc(data_pt($g['actualizado_gv'], true))?></td>
+				<td class="acoes">
+					<a class="btn btn-claro" href="<?=url_base('gravacoes/descarregar/'.(int)$g['id_gv'])?>">Descarregar</a>
+					<form method="post" action="<?=url_base('gravacoes/apagar/'.(int)$g['id_gv'])?>"
+					      onsubmit="return confirm('Apagar esta gravação? Não há forma de a recuperar.')">
+						<?=csrf_field()?>
+						<button type="submit" class="btn btn-perigo">Apagar</button>
+					</form>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+	<?php endif; ?>
+</div>

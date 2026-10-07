@@ -10,3 +10,4 @@ require_once(_C_ . _P_ . 'app' . _P_ . 'app.mdl' . _P_ . 'configura.php');
 require_once(_C_ . _P_ . 'lib' . _P_ . 'define.php');
 require_once(_C_ . _P_ . 'lib' . _P_ . 'ajuda' . _P_ . '_values_.php');
 require_once(_C_ . _P_ . 'lib' . _P_ . 'ajuda' . _P_ . 'head.php');
+require_once(_C_ . _P_ . 'lib' . _P_ . 'ajuda' . _P_ . 'icones.php');

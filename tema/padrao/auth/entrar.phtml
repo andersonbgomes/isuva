@@ -14,6 +14,7 @@ submeter este formulário com o browser de quem lá passasse.
 <html lang="pt">
 <head>
 	<?=head()?>
+	<meta name="theme-color" content="#18181b">
 	<link rel="stylesheet" href="<?=url_versionada('tema/padrao/ext/assets/css/estilo.css')?>">
 </head>
 <body>
@@ -21,7 +22,8 @@ submeter este formulário com o browser de quem lá passasse.
 <div class="centrado">
 	<div class="cartao cartao-estreito">
 
-		<h1 class="texto-centro"><?=esc(configura('tit'))?></h1>
+		<div class="marca-entrada"><?=icone('comando')?></div>
+		<h1 class="texto-centro" style="margin:0 0 4px"><?=esc(configura('tit'))?></h1>
 		<p class="texto-fraco texto-centro">Entre com a sua conta.</p>
 
 		<?php if(!empty($_SESSION['txt'])): ?>

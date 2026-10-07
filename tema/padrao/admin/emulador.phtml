@@ -1,0 +1,105 @@
+<?php
+/*
+O endereço do EmulatorJS e as BIOS de cada consola.
+*/
+?>
+<form class="cartao" method="post" action="<?=url_base('admin/guardaremulador')?>">
+	<?=csrf_field()?>
+	<h3>De onde vem o emulador</h3>
+	<p class="texto-fraco">
+		Por omissão o browser carrega o EmulatorJS da CDN oficial
+		(<code>https://cdn.emulatorjs.org/stable/data/</code>). Para não depender dela,
+		copie a pasta <code>data/</code> de uma versão do EmulatorJS para o servidor
+		(por exemplo para <code>emulatorjs/data/</code>) e escreva aqui esse caminho.
+	</p>
+	<label for="emu_dados">Endereço da pasta <code>data/</code></label>
+	<input type="text" id="emu_dados" name="emu_dados" required maxlength="500" value="<?=esc($this->ver->emuDados)?>">
+	<button type="submit" class="btn btn-largo">Gravar</button>
+</form>
+
+<div class="cartao">
+	<h3>BIOS</h3>
+	<p class="texto-fraco">
+		A BIOS é o programa interno da consola. Tem direitos de autor, por isso não vem com o
+		site: envie a sua, uma por consola. O nome do ficheiro conta, porque o emulador procura-a
+		pelo nome. Mantenha o nome original (ex.: <code>scph5501.bin</code> na PS1,
+		<code>bios_CD_U.bin</code> no Sega CD, <code>saturn_bios.bin</code> no Saturn,
+		<code>gba_bios.bin</code> no GBA).
+	</p>
+
+	<div class="tabela-rola">
+	<table>
+		<thead>
+			<tr><th>Consola</th><th>Precisa?</th><th>Ficheiro</th><th></th></tr>
+		</thead>
+		<tbody>
+			<?php foreach ($this->ver->bios as $chave => $b): ?>
+			<tr>
+				<td><?=esc($b['consola']['nome'])?></td>
+				<td><?=$b['consola']['bios'] === 'obrigatoria' ? '<strong>Obrigatória</strong>' : 'Opcional'?></td>
+				<td>
+					<?php if($b['ficheiro']): ?>
+						<code><?=esc($b['ficheiro']['nome'])?></code>
+					<?php else: ?>
+						<span class="texto-fraco">Nenhuma</span>
+					<?php endif; ?>
+				</td>
+				<td class="acoes">
+					<form method="post" enctype="multipart/form-data" action="<?=url_base('admin/guardarbios')?>" class="form-bios">
+						<?=csrf_field()?>
+						<input type="hidden" name="consola" value="<?=esc($chave)?>">
+						<input type="hidden" name="envio" value="">
+						<input type="file" name="bios" required aria-label="BIOS de <?=esc($b['consola']['nome'])?>">
+						<button type="submit" class="btn">Enviar</button>
+					</form>
+					<?php if($b['ficheiro']): ?>
+					<form method="post" action="<?=url_base('admin/apagarbios')?>" onsubmit="return confirm('Apagar esta BIOS?')">
+						<?=csrf_field()?>
+						<input type="hidden" name="consola" value="<?=esc($chave)?>">
+						<button type="submit" class="btn btn-perigo">Apagar</button>
+					</form>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+</div>
+
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/envio.js')?>"></script>
+<script>
+/*
+A BIOS vai aos pedaços, como os jogos: a da PS2 (4 MB) não passa num
+servidor com upload_max_filesize de 2 MB. O ficheiro deixa de ir no
+formulário (o input perde o name) e o formulário só leva o "envio".
+*/
+document.querySelectorAll('.form-bios').forEach(function (form) {
+	form.addEventListener('submit', async function (e) {
+		var input = form.querySelector('input[type=file]');
+		var botao = form.querySelector('button');
+		if (form.dataset.pronto === '1' || !input.files[0]) { return; }
+		e.preventDefault();
+
+		botao.disabled = true;
+		try {
+			var id = await enviarAosPedacos({
+				ficheiro:  input.files[0],
+				campos:    { consola: form.consola.value, tipo: 'bios' },
+				csrf:      form.csrf_token.value,
+				iniciar:   <?=json_encode(url_base('admin/iniciar'), JSON_HEX_TAG | JSON_UNESCAPED_SLASHES)?>,
+				pedaco:    <?=json_encode(url_base('admin/pedaco'), JSON_HEX_TAG | JSON_UNESCAPED_SLASHES)?>,
+				progresso: function (pct) { botao.textContent = pct + '%'; }
+			});
+			form.envio.value = id;
+			input.removeAttribute('name');
+			form.dataset.pronto = '1';
+			form.submit();
+		} catch (erro) {
+			alert(erro.message);
+			botao.disabled = false;
+			botao.textContent = 'Enviar';
+		}
+	});
+});
+</script>

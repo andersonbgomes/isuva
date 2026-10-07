@@ -1,0 +1,23 @@
+<?php
+/*
+As contas: quem são, se são administradores, se estão activas.
+*/
+?>
+<div class="cartao">
+	<div class="tabela-rola">
+	<table>
+		<thead><tr><th>Nome</th><th>E-mail</th><th>Acesso</th><th>Estado</th><th></th></tr></thead>
+		<tbody>
+			<?php foreach ($this->ver->contas as $c): ?>
+			<tr>
+				<td><strong><?=esc($c['nome_us'])?></strong><?=(int)$c['id_us'] === utilizador_actual() ? ' <span class="texto-fraco">(você)</span>' : ''?></td>
+				<td><?=esc($c['email_us'])?></td>
+				<td><?=(int)$c['nivl_us'] === 1 ? '<span class="etiqueta">Administrador</span>' : '<span class="texto-fraco">Jogador</span>'?></td>
+				<td><?=(int)$c['stto_us'] === 1 ? '<span class="estado-ok">Activa</span>' : '<span class="estado-mal">Desactivada</span>'?></td>
+				<td class="acoes"><a class="btn btn-claro" href="<?=url_base('utilizadores/editar/'.(int)$c['id_us'])?>">Editar</a></td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+</div>

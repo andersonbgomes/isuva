@@ -1,0 +1,100 @@
+<?php
+/*
+O CATÁLOGO, ao estilo de uma loja de jogos.
+
+Sem filtro: secções -- "Continuar a jogar" (o que esta conta jogou por
+último), "Acabados de chegar", e uma por família de consolas. Com filtro
+(família, consola ou pesquisa): uma grelha só, com os resultados.
+
+O filtro é um GET (não altera nada), por isso não leva CSRF.
+*/
+$filtrado = isset($this->ver->resultados);
+$familiaActual = $this->ver->familia;
+$consolaActual = $this->ver->consola;
+?>
+<nav class="familias" aria-label="Famílias de consolas">
+	<a class="<?=!$filtrado ? 'active' : ''?>" href="<?=url_base('jogos')?>">Início</a>
+	<?php foreach ($this->ver->familias as $f): ?>
+	<a class="<?=$familiaActual === $f ? 'active' : ''?>" href="<?=url_base('jogos')?>?familia=<?=urlencode($f)?>"><?=esc($f)?></a>
+	<?php endforeach; ?>
+
+	<form method="get" action="<?=url_base('jogos')?>" style="margin-left:auto">
+		<select name="consola" onchange="this.form.submit()" aria-label="Consola">
+			<option value="">Todas as consolas</option>
+			<?php foreach (Consolas::porFamilia() as $familia => $lista): ?>
+			<optgroup label="<?=esc($familia)?>">
+				<?php foreach ($lista as $chave => $c): ?>
+				<option value="<?=esc($chave)?>" <?=$chave === $consolaActual ? 'selected' : ''?>><?=esc($c['nome'])?></option>
+				<?php endforeach; ?>
+			</optgroup>
+			<?php endforeach; ?>
+		</select>
+	</form>
+</nav>
+
+<?php if($filtrado): ?>
+
+	<section class="seccao">
+		<div class="seccao-cabeca">
+			<h2>
+				<?php if($this->ver->pesquisa !== ''): ?>Resultados para "<?=esc($this->ver->pesquisa)?>"
+				<?php elseif($consolaActual !== ''): ?><?=esc(Consolas::nome($consolaActual))?>
+				<?php else: ?><?=esc($familiaActual)?><?php endif; ?>
+			</h2>
+			<span class="texto-fraco"><?=count($this->ver->resultados)?> jogo(s)</span>
+		</div>
+
+		<?php if(empty($this->ver->resultados)): ?>
+		<div class="cartao vazio">
+			<?=icone('procurar')?>
+			<h2>Nenhum jogo encontrado</h2>
+			<p class="texto-fraco">
+				<a href="<?=url_base('jogos')?>">Ver todos os jogos</a>, ou
+				<a href="<?=url_base('jogar/local')?>">jogar um ficheiro do seu computador</a>.
+			</p>
+		</div>
+		<?php else: ?>
+		<div class="grelha-jogos densa">
+			<?php foreach ($this->ver->resultados as $j) { include __DIR__.'/_cartao.phtml'; } ?>
+		</div>
+		<?php endif; ?>
+	</section>
+
+<?php elseif($this->ver->total === 0): ?>
+
+	<div class="cartao vazio">
+		<?=icone('comando')?>
+		<h2>O catálogo ainda está vazio</h2>
+		<p class="texto-fraco">
+			<?php if($this->e_admin()): ?>
+				Comece por <a href="<?=url_base('admin/novo')?>">adicionar o primeiro jogo</a> &mdash;
+				o <a href="<?=url_base('como-usar/guia/adicionar')?>">guia</a> explica como.
+			<?php else: ?>
+				Entretanto, pode <a href="<?=url_base('jogar/local')?>">jogar um ficheiro do seu computador</a>.
+			<?php endif; ?>
+		</p>
+	</div>
+
+<?php else: ?>
+
+	<?php
+	$seccoes = [];
+	if(!empty($this->ver->continuar)){ $seccoes[] = ['Continuar a jogar', $this->ver->continuar, url_base('gravacoes'), 'As minhas gravações']; }
+	$seccoes[] = ['Acabados de chegar', $this->ver->novidades, null, null];
+	foreach ($this->ver->porFamilia as $familia => $lista) {
+		$seccoes[] = [$familia, array_slice($lista, 0, JogosControlo::POR_SECCAO), url_base('jogos').'?familia='.urlencode($familia), 'Ver todos ('.count($lista).')'];
+	}
+	?>
+	<?php foreach ($seccoes as [$titulo, $lista, $link, $textoLink]): ?>
+	<section class="seccao">
+		<div class="seccao-cabeca">
+			<h2><?=esc($titulo)?></h2>
+			<?php if($link): ?><a class="ver-todos" href="<?=$link?>"><span><?=esc($textoLink)?></span><?=icone('seta')?></a><?php endif; ?>
+		</div>
+		<div class="grelha-jogos">
+			<?php foreach ($lista as $j) { include __DIR__.'/_cartao.phtml'; } ?>
+		</div>
+	</section>
+	<?php endforeach; ?>
+
+<?php endif; ?>

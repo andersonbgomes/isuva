@@ -14,6 +14,9 @@ O PAINEL DO ADMINISTRADOR: os jogos do catálogo, e o emulador.
     /admin/guardaremulador    (POST)
     /admin/guardarbios        (POST) envia a BIOS de uma consola
     /admin/apagarbios         (POST)
+    /admin/sugestoes          os links que os jogadores sugerem
+    /admin/recusar/7          (POST) recusa a sugestão 7
+    /admin/novo?sugestao=7    aceitar: o "Adicionar jogo" já preenchido
 
 TODAS AS ACÇÕES COMEÇAM POR so_admin(). Não chega esconder o menu: quem
 souber o endereço escreve-o à mão.
@@ -62,6 +65,7 @@ class AdminControlo extends Acao {
 		Armazem::limparEnviosVelhos();
 
 		$this->ver->temCurl    = function_exists('curl_init');
+		$this->ver->sugestao   = $this->sugestaoPorAceitar($_GET['sugestao'] ?? 0);
 		$this->renderizar('novo');
 	}
 
@@ -145,9 +149,16 @@ class AdminControlo extends Acao {
 			$this->voltar('danger', 'Erro', 'A sessão expirou. Tente outra vez.', 'admin/novo');
 		}
 
+		/*
+		Um jogo que nasce de uma sugestão: as falhas voltam ao formulário
+		ainda ligado a ela, e o sucesso marca-a como aceite.
+		*/
+		$sugestao = $this->sugestaoPorAceitar($_POST['sugestao'] ?? 0);
+		$volta = $sugestao ? 'admin/novo?sugestao='.(int)$sugestao['id_sg'] : 'admin/novo';
+
 		$campos = $this->validarCampos();
 		if(is_string($campos)){
-			$this->voltar('warning', 'Falta corrigir', $campos, 'admin/novo');
+			$this->voltar('warning', 'Falta corrigir', $campos, $volta);
 		}
 
 		/*
@@ -157,7 +168,7 @@ class AdminControlo extends Acao {
 		*/
 		$capa = $this->receberCapa();
 		if(is_string($capa) && $capa !== ''){
-			$this->voltar('warning', 'Capa', $capa, 'admin/novo');
+			$this->voltar('warning', 'Capa', $capa, $volta);
 		}
 
 		$origem = (($_POST['origem'] ?? '') === 'link') ? 'link' : 'ficheiro';
@@ -167,7 +178,7 @@ class AdminControlo extends Acao {
 
 		if(is_string($ficheiro)){
 			if(is_array($capa)){ Armazem::apagar('capas', $capa['disco']); }
-			$this->voltar('danger', 'O jogo não foi gravado', $ficheiro, 'admin/novo');
+			$this->voltar('danger', 'O jogo não foi gravado', $ficheiro, $volta);
 		}
 
 		$j = new Jogo;
@@ -187,7 +198,12 @@ class AdminControlo extends Acao {
 			Armazem::apagar('jogos', $ficheiro['disco']);
 			if(is_array($capa)){ Armazem::apagar('capas', $capa['disco']); }
 			_registar_erro('Jogo', (string)$j->sms);
-			$this->voltar('danger', 'Erro', 'Não foi possível gravar o jogo. O motivo ficou no registo de erros.', 'admin/novo');
+			$this->voltar('danger', 'Erro', 'Não foi possível gravar o jogo. O motivo ficou no registo de erros.', $volta);
+		}
+
+		if($sugestao){
+			Sugestoes::decidir($sugestao['id_sg'], Sugestoes::ACEITE, null, (int)$j->novoId);
+			$this->voltar('success', 'Gravado', '"'.$campos['titulo_jg'].'" já está no catálogo, e a sugestão ficou aceite.', 'admin/sugestoes');
 		}
 
 		$this->voltar('success', 'Gravado', '"'.$campos['titulo_jg'].'" já está no catálogo.', 'admin');
@@ -412,8 +428,43 @@ class AdminControlo extends Acao {
 
 
 	//=============================================================
+	// As sugestões dos jogadores
+	//=============================================================
+
+	public function sugestoes() {
+		$this->so_admin();
+		list($this->ver->espera, $this->ver->feitas) = Sugestoes::paraRever();
+		$this->renderizar('sugestoes');
+	}
+
+	public function recusar() {
+		$this->so_admin();
+		if($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valido()){
+			$this->voltar('danger', 'Erro', 'A sessão expirou. Tente outra vez.', 'admin/sugestoes');
+		}
+
+		$motivo = trim((string)($_POST['motivo'] ?? ''));
+		if(mb_strlen($motivo) > Sugestoes::MAX_MOTIVO){
+			$this->voltar('warning', 'Falta corrigir', 'O motivo tem no máximo '.Sugestoes::MAX_MOTIVO.' caracteres.', 'admin/sugestoes');
+		}
+
+		if(!Sugestoes::decidir(id, Sugestoes::RECUSADA, $motivo !== '' ? $motivo : null)){
+			$this->voltar('warning', 'Sugestão', 'Essa sugestão já não está à espera.', 'admin/sugestoes');
+		}
+		$this->voltar('success', 'Recusada', 'A sugestão foi recusada. O jogador vê o motivo na página dele.', 'admin/sugestoes');
+	}
+
+
+	//=============================================================
 	// Ajudantes
 	//=============================================================
+
+	//a sugestão $id, se ainda estiver à espera; senão []
+	private function sugestaoPorAceitar($id) {
+		if((int)$id <= 0){ return []; }
+		$s = Sugestoes::pegar($id);
+		return ($s && (int)$s['estado_sg'] === Sugestoes::ESPERA) ? $s : [];
+	}
 
 	private function jogo($id) {
 		$j = new Jogo;

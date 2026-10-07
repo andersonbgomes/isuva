@@ -121,6 +121,14 @@ body.app { padding-bottom: 88px; }               /* espaço para a barra de baix
 
 /* a etiqueta que aparece ao passar o rato (só com rato, ao lado da barra) */
 .barra a .dica { display: none; }
+/* as sugestões à espera, um número em cima do ícone */
+.barra-conta {
+	position: absolute; top: 0; right: 0;
+	min-width: 18px; height: 18px; padding: 0 5px;
+	border-radius: 999px;
+	background: #e11d48; color: #fff;
+	font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
+}
 
 @media (min-width: 640px) {
 	.barra {
@@ -312,7 +320,7 @@ body.app { padding-bottom: 88px; }               /* espaço para a barra de baix
 label { display: block; margin: 16px 0 6px; font-size: 14px; font-weight: 600; color: var(--texto); }
 label .texto-fraco { font-weight: 400; }
 
-input[type=text], input[type=email], input[type=password], input[type=number], select, textarea {
+input[type=text], input[type=email], input[type=url], input[type=password], input[type=number], select, textarea {
 	width: 100%;
 	padding: 11px 14px;
 	border: 1px solid transparent;
@@ -365,6 +373,7 @@ tbody tr:hover { background: rgba(39, 39, 42, .3); }
 td.acoes { white-space: nowrap; text-align: right; }
 td.acoes form { display: inline-flex; gap: 6px; align-items: center; margin-left: 6px; }
 td.acoes input[type=file] { width: 210px; }
+td.acoes input[type=text] { width: 170px; padding: 8px 12px; }
 
 /* ---------- etiquetas ---------- */
 .etiqueta {
@@ -377,6 +386,9 @@ td.acoes input[type=file] { width: 210px; }
 }
 .etiqueta-servidor { background: #7c3aed; }
 .etiqueta-fraca { background: rgba(113, 113, 122, .3); color: var(--texto); }
+.etiqueta-perigo { background: rgba(225, 29, 72, .3); color: #fecdd3; }
+/* um link comprido (as sugestões) parte-se onde for preciso, em vez de alargar a tabela */
+.texto-partido { overflow-wrap: anywhere; font-size: 13px; max-width: 420px; }
 .estado-ok  { color: #5eead4; font-weight: 600; }
 .estado-mal { color: #fda4af; font-weight: 600; }
 

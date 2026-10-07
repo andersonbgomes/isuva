@@ -72,6 +72,10 @@ function titulo(){
 			$titulo = 'As minhas gravações';
 			break;
 
+		case 'sugestoes':
+			$titulo = 'Sugerir um jogo';
+			break;
+
 		case 'servidores':
 			switch (acao) {
 				case 'novo':   $titulo = 'Novo servidor de jogo';    break;
@@ -85,6 +89,7 @@ function titulo(){
 				case 'novo':     $titulo = 'Adicionar jogo';    break;
 				case 'editar':   $titulo = 'Editar jogo';       break;
 				case 'emulador': $titulo = 'Emulador e BIOS';   break;
+				case 'sugestoes': $titulo = 'Sugestões dos jogadores'; break;
 				default:         $titulo = 'Gerir jogos';       break;
 			}
 			break;

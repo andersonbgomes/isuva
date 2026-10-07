@@ -1,10 +1,18 @@
 <?php
 /*
-JOGAR UM FICHEIRO DO COMPUTADOR DE QUEM JOGA.
+JOGAR UM FICHEIRO DO COMPUTADOR DE QUEM JOGA, OU DE UM LINK.
 
 O ficheiro escolhido NUNCA sai do computador: o JavaScript entrega o
 objecto File directamente ao EmulatorJS (EJS_gameUrl aceita um File), e
 o browser lê-o do disco. Nada vai para o servidor.
+
+A PARTIR DE UM LINK, o mesmo: é o BROWSER de quem joga que descarrega
+o ficheiro (fetch), e o servidor nunca lhe toca -- não gasta disco, nem
+banda, nem fica com cópia. O preço é o CORS: o browser só deixa esta
+página ler um ficheiro de outro site se esse site o autorizar, e muitos
+não autorizam (Google Drive, Mega...). Nesses, a página explica e
+oferece as alternativas: descarregar e escolher o ficheiro, ou sugerir
+o jogo ao catálogo (aí quem descarrega é o servidor, e o CORS não conta).
 
 O emulador só arranca uma vez por página -- o EmulatorJS não foi feito
 para trocar de núcleo sem recarregar. Para jogar outro, recarrega-se.
@@ -24,8 +32,9 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 	<a class="btn btn-escuro" href="<?=url_base('jogos')?>"><?=icone('voltar')?> Jogos</a>
 	<div class="palco-titulo">
 		<strong>Jogar do meu computador</strong>
-		<small>O ficheiro não é enviado para o servidor</small>
+		<small>O jogo não passa pelo nosso servidor</small>
 	</div>
+	<a class="btn btn-escuro" id="sugerir" hidden><?=icone('mais')?> Sugerir ao catálogo</a>
 	<?php include _C_._P_.'tema'._P_.tema._P_.'extras'._P_.'comando-estado.phtml'; ?>
 </header>
 
@@ -45,13 +54,31 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 	</select>
 	<p class="palco-nota" id="nota"></p>
 
-	<label for="ficheiro">Ficheiro do jogo</label>
-	<input type="file" id="ficheiro" required>
+	<label>De onde vem o jogo</label>
+	<div class="escolha">
+		<label><input type="radio" name="origem" value="ficheiro" checked> Do meu computador</label>
+		<label><input type="radio" name="origem" value="link"> De um link</label>
+	</div>
 
-	<button type="submit" class="btn btn-largo">Jogar</button>
+	<div id="por-ficheiro">
+		<label for="ficheiro">Ficheiro do jogo</label>
+		<input type="file" id="ficheiro">
+	</div>
+
+	<div id="por-link" hidden>
+		<label for="link">Link de descarga directa</label>
+		<input type="url" id="link" maxlength="2000" placeholder="https://...">
+		<p class="palco-nota">
+			O seu browser descarrega o jogo directamente desse site, sem passar pelo nosso servidor.
+			Nem todos os sites deixam; se não deixar, aparece aqui o que fazer.
+		</p>
+		<div class="progresso" id="progresso" hidden><div></div></div>
+	</div>
+
+	<button type="submit" class="btn btn-largo" id="jogar">Jogar</button>
 	<p class="palco-nota">
-		Num jogo do seu computador, as gravações ficam só neste browser. Para as ter na sua conta
-		(e continuar noutro computador), jogue a partir do catálogo.
+		Num jogo do seu computador ou de um link, as gravações ficam só neste browser. Para as ter na sua
+		conta (e continuar noutro computador), jogue a partir do catálogo.
 	</p>
 </form>
 
@@ -62,13 +89,25 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 <script>
 (function () {
 	var CONSOLAS = <?=json_encode($this->ver->consolas, $JSON)?>;
+	var URL_SUGERIR = <?=json_encode(url_base('sugestoes'), $JSON)?>;
 	var form = document.getElementById('escolha');
 	var sel  = document.getElementById('consola');
 	var fich = document.getElementById('ficheiro');
+	var link = document.getElementById('link');
 	var nota = document.getElementById('nota');
 	var aviso = document.getElementById('aviso');
+	var barra = document.getElementById('progresso');
+	var botao = document.getElementById('jogar');
 
 	function avisar(texto) { aviso.textContent = texto; aviso.hidden = !texto; }
+	function origem() { return form.querySelector('[name=origem]:checked').value; }
+
+	form.querySelectorAll('[name=origem]').forEach(function (r) {
+		r.addEventListener('change', function () {
+			document.getElementById('por-ficheiro').hidden = origem() !== 'ficheiro';
+			document.getElementById('por-link').hidden = origem() !== 'link';
+		});
+	});
 
 	sel.addEventListener('change', function () {
 		var c = CONSOLAS[sel.value];
@@ -87,22 +126,139 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 		}
 	});
 
-	form.addEventListener('submit', function (e) {
+	//o nome do ficheiro no fim do endereço ("…/Jogo%20Bom.nes?x=1" -> "Jogo Bom.nes")
+	function nomeDoLink(endereco) {
+		try {
+			return decodeURIComponent(new URL(endereco).pathname.split('/').pop()) || '';
+		} catch (e) { return ''; }
+	}
+
+	function extensao(nome) {
+		return nome.indexOf('.') !== -1 ? nome.split('.').pop().toLowerCase() : '';
+	}
+
+	function naoServe(ext, c) {
+		return (ext ? 'Um ficheiro .' + ext : 'Um ficheiro sem extensão') + ' não serve para ' + c.nome
+			+ '. Formatos aceites: ' + c.ext.join(', ') + '.';
+	}
+
+	/*
+	Descarrega o link no browser, com a percentagem, e devolve um File --
+	o mesmo tipo de objecto que o "do meu computador" dá ao emulador.
+	*/
+	async function descarregar(endereco) {
+		var r;
+		try {
+			r = await fetch(endereco, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+		} catch (e) {
+			//o browser não diz porquê, de propósito; quase sempre é o CORS
+			throw new Error('O site desse link não deixa outros sites abrirem os ficheiros dele (é uma regra do browser, o CORS). '
+				+ 'Pode descarregar o ficheiro e escolher "Do meu computador", ou sugerir o jogo ao catálogo: aí quem o descarrega é o nosso servidor.');
+		}
+		if (!r.ok) {
+			throw new Error('O site do link respondeu ' + r.status + '. Confirme que o link descarrega o ficheiro directamente.');
+		}
+		if (/text\/html/i.test(r.headers.get('Content-Type') || '')) {
+			throw new Error('Esse link abre uma página, e não o ficheiro do jogo. Precisa do link de descarga directa.');
+		}
+
+		var total = parseInt(r.headers.get('Content-Length') || '0', 10);
+		var partes = [], recebido = 0;
+		barra.hidden = false;
+		if (r.body && r.body.getReader) {
+			var leitor = r.body.getReader();
+			for (;;) {
+				var p = await leitor.read();
+				if (p.done) { break; }
+				partes.push(p.value);
+				recebido += p.value.length;
+				var pct = total ? Math.min(100, Math.round(recebido / total * 100)) : 0;
+				barra.firstElementChild.style.width = (total ? pct : 50) + '%';
+				botao.textContent = 'A descarregar... ' + (total ? pct + '%' : (recebido / 1048576).toFixed(1) + ' MB');
+			}
+		} else {
+			partes.push(await r.blob());
+		}
+
+		//um redireccionamento pode ter levado a um endereço com o nome verdadeiro
+		var nome = nomeDoLink(r.url);
+		if (!extensao(nome)) { nome = nomeDoLink(endereco); }
+		return new File(partes, nome || 'jogo');
+	}
+
+	/*
+	Um jogo de um link pode ir para o catálogo: o botão leva às sugestões
+	com o link e a consola já escritos (é lá que se pede a conta).
+	*/
+	function mostrarSugerir(endereco) {
+		var a = document.getElementById('sugerir');
+		a.href = URL_SUGERIR + '?' + new URLSearchParams({
+			link: endereco,
+			consola: sel.value,
+			titulo: nomeDoLink(endereco).replace(/\.[^.]+$/, '')
+		}).toString();
+		a.hidden = false;
+	}
+
+	function reporBotao() {
+		botao.disabled = false;
+		botao.textContent = 'Jogar';
+		barra.hidden = true;
+	}
+
+	form.addEventListener('submit', async function (e) {
 		e.preventDefault();
-		var c = CONSOLAS[sel.value], f = fich.files[0];
-		if (!c || !f) { return; }
+		if (botao.disabled) { return; }
+		var c = CONSOLAS[sel.value];
+		if (!c) { avisar('Escolha a consola.'); return; }
 
 		if (c.pedeConta) {
 			avisar('Esta consola precisa de uma conta (por causa da BIOS). Entre ou crie uma conta, é grátis.');
 			return;
 		}
 
-		//a mesma regra do servidor: é pela extensão que o emulador escolhe o que arrancar
-		var ext = f.name.split('.').pop().toLowerCase();
-		if (c.ext.indexOf(ext) === -1) {
-			avisar('Um ficheiro .' + ext + ' não serve para ' + c.nome + '. Formatos aceites: ' + c.ext.join(', ') + '.');
+		var f = fich.files[0], endereco = '';
+		if (origem() === 'link') {
+			endereco = link.value.trim();
+			if (!/^https?:\/\//i.test(endereco)) {
+				avisar('O link tem de começar por http:// ou https://.');
+				return;
+			}
+			//uma página https não pode ler um http:// (o browser bloqueia, sem dizer porquê)
+			if (location.protocol === 'https:' && /^http:\/\//i.test(endereco)) {
+				avisar('O browser não deixa abrir um link http:// a partir de um site seguro. Use um link https://.');
+				return;
+			}
+			//se o link já mostra a extensão, vê-se antes de descarregar tudo
+			var antes = extensao(nomeDoLink(endereco));
+			if (antes && c.ext.indexOf(antes) === -1) {
+				avisar(naoServe(antes, c));
+				return;
+			}
+
+			botao.disabled = true;
+			avisar('');
+			try {
+				f = await descarregar(endereco);
+			} catch (erro) {
+				avisar(erro.message);
+				reporBotao();
+				mostrarSugerir(endereco);
+				return;
+			}
+		} else if (!f) {
+			avisar('Escolha o ficheiro do jogo.');
 			return;
 		}
+
+		//a mesma regra do servidor: é pela extensão que o emulador escolhe o que arrancar
+		var ext = extensao(f.name);
+		if (c.ext.indexOf(ext) === -1) {
+			avisar(naoServe(ext, c));
+			reporBotao();
+			return;
+		}
+		if (endereco) { mostrarSugerir(endereco); }
 
 		//um aviso de uma tentativa anterior (extensão errada) já não se aplica;
 		//o da BIOS em falta e o das threads continuam a valer, e ficam

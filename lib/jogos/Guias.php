@@ -114,8 +114,8 @@ class Guias {
 		],
 
 		'local' => [
-			'grupo' => 'Começar', 'titulo' => 'Jogar do meu computador', 'icone' => 'portatil', 'tom' => '#f59e0b',
-			'resumo' => 'Abrir um jogo que tem no seu computador, sem o enviar para o site.',
+			'grupo' => 'Começar', 'titulo' => 'Jogar do meu computador ou de um link', 'icone' => 'portatil', 'tom' => '#f59e0b',
+			'resumo' => 'Abrir um jogo que tem no computador, ou de um link, sem passar pelo site.',
 			'blocos' => [
 				['p', 'Tem um jogo no computador que não está no catálogo? Pode abri-lo directamente. O ficheiro **não sai do seu computador**: o browser lê-o e entrega-o ao emulador.'],
 				['passos', [
@@ -123,8 +123,27 @@ class Guias {
 					'Escolha a consola. Por baixo aparecem os formatos que essa consola aceita.',
 					'Escolha o ficheiro e carregue em **Jogar**.',
 				]],
+				['h', 'A partir de um link'],
+				['p', 'Na mesma página, escolha **De um link** e cole o link de descarga directa do jogo. O seu browser descarrega-o desse site e abre-o logo, sem passar pelo nosso servidor.'],
+				['alerta', 'Muitos sites não deixam outros sites abrirem os ficheiros deles (é uma regra dos browsers, chamada CORS), e com esses o link não abre. Nesse caso, descarregue o ficheiro e escolha **Do meu computador**, ou carregue em **Sugerir ao catálogo**.'],
 				['alerta', 'Este modo serve só as consolas que correm no browser. A PS2 corre no nosso servidor, e para isso o jogo tem de estar no catálogo.'],
 				['nota', 'As gravações destes jogos ficam só neste browser. Para as ter na sua conta, peça ao administrador que ponha o jogo no catálogo.'],
+			],
+		],
+
+		'sugerir' => [
+			'grupo' => 'Começar', 'titulo' => 'Sugerir um jogo', 'icone' => 'mais', 'tom' => '#22c55e',
+			'resumo' => 'Encontrou um link de um jogo? Peça para o pôr no catálogo.',
+			'blocos' => [
+				['p', 'Se encontrar o link de descarga de um jogo que gostava de ver no catálogo, pode sugeri-lo. Precisa de uma conta (é grátis).'],
+				['passos', [
+					'Abra **Sugerir um jogo** (o ícone **+**).',
+					'Escreva o nome do jogo, escolha a consola e cole o **link de descarga directa**.',
+					'Carregue em **Enviar sugestão**.',
+					'Na mesma página, em **As minhas sugestões**, vê se está à espera, se foi aceite (com o botão **Jogar**) ou recusada (com o motivo).',
+				]],
+				['nota', 'Num jogo aceite, as gravações ficam na sua conta, como em qualquer jogo do catálogo.'],
+				['alerta', 'Sugira só jogos que podem ser partilhados: homebrew, jogos gratuitos, ou jogos cujo autor deixa distribuir. Cada conta pode ter até 5 sugestões à espera, e fazer até 10 por dia.'],
 			],
 		],
 
@@ -297,6 +316,13 @@ class Guias {
 				['p', 'Para jogos em CD (PS1, Sega CD, Saturn, PS2) prefira `.chd`: é um ficheiro só e mais pequeno. Um `.cue` precisa dos seus `.bin`; nas consolas de browser, ponha-os todos num `.zip`. A PS2 não aceita `.zip`.'],
 				['h', 'Links'],
 				['p', 'O link tem de descarregar o ficheiro directamente. Páginas com um botão "Download" (Google Drive, Mega) normalmente não servem. Se o link não der o nome com a extensão certa, escreva-o no campo **Nome do ficheiro**.'],
+				['h', 'Sugestões dos jogadores'],
+				['p', 'Os jogadores com conta podem sugerir jogos por link. As sugestões à espera aparecem em **Sugestões dos jogadores** (o ícone do visto, com o número em cima).'],
+				['passos', [
+					'Abra o link para ver o que é, e confirme que o jogo pode ser distribuído.',
+					'**Aceitar** abre o "Adicionar jogo" já preenchido com o link. Reveja, junte uma capa se quiser, e carregue em **Gravar**: o servidor descarrega o jogo, e a sugestão fica aceite.',
+					'**Recusar** pede um motivo (opcional), que o jogador lê na página dele.',
+				]],
 				['h', 'Editar, esconder e apagar'],
 				['p', 'Em **Gerir jogos**: **Editar** muda o título, a consola, a descrição e a capa. Tirar o visto de **Visível no catálogo** esconde o jogo sem o apagar (o administrador continua a poder abri-lo para testar). **Apagar** tira-o do catálogo e do disco.'],
 				['alerta', 'Ponha no catálogo só jogos que tem o direito de distribuir: homebrew, jogos livres, ou cópias dos seus próprios discos num site privado.'],

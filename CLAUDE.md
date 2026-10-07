@@ -24,6 +24,11 @@ O domínio dos jogos vive em `lib/jogos/`:
 - `Bios.php` aceita a BIOS num `.zip` (`deZip`): na PS2 extrai o `.bin`
   principal (o PCSX2 não lê .zip); nas consolas de browser deixa o .zip
   inteiro (o EmulatorJS abre-o, e a DS precisa de vários ficheiros);
+- `Sugestoes.php`: os links que os jogadores sugerem para o catálogo.
+  Uma sugestão é só um pedido: o servidor NÃO visita o link até o
+  administrador aceitar, e aí pelo `AdminControlo::guardar` (Descarga.php).
+  O "Jogar de um link" (`jogar/local`) é o contrário: quem descarrega é o
+  browser de quem joga, e o servidor nunca toca no ficheiro;
 - `Gravacoes.php`: as gravações de cada conta (sram, estados, cartão da
   PS2). Do lado do browser, `tema/padrao/ext/assets/js/gravacoes.js`.
   Do lado do nó, `trazer_cartao`/`devolver_cartao` no `agente.py`.

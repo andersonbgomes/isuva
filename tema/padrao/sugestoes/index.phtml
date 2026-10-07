@@ -1,0 +1,103 @@
+<?php
+/*
+Sugerir um jogo, e o estado das sugestões desta conta.
+
+O link é mostrado como TEXTO, e não como <a>: é um endereço escrito por
+quem sugeriu, e o próprio jogador já sabe para onde aponta.
+*/
+$ini = $this->ver->inicio;
+$estados = [
+	Sugestoes::ESPERA   => ['À espera', 'etiqueta-fraca'],
+	Sugestoes::ACEITE   => ['Aceite', ''],
+	Sugestoes::RECUSADA => ['Recusada', 'etiqueta-perigo'],
+];
+?>
+<form class="cartao" method="post" action="<?=url_base('sugestoes/enviar')?>">
+	<?=csrf_field()?>
+	<p class="texto-fraco">
+		Encontrou um jogo com um link de descarga e quer vê-lo no catálogo? Cole o link aqui.
+		O administrador vê a sugestão e, se a aceitar, o jogo fica no catálogo para todos,
+		com as gravações na sua conta.
+	</p>
+
+	<label for="titulo">Nome do jogo</label>
+	<input type="text" id="titulo" name="titulo" required maxlength="150" value="<?=esc($ini['titulo'])?>">
+
+	<label for="consola">Consola</label>
+	<select id="consola" name="consola" required>
+		<option value="">Escolha a consola</option>
+		<?php foreach (Consolas::porFamilia() as $familia => $lista): ?>
+		<optgroup label="<?=esc($familia)?>">
+			<?php foreach ($lista as $chave => $c): ?>
+			<option value="<?=esc($chave)?>" <?=$ini['consola'] === $chave ? 'selected' : ''?>><?=esc($c['nome'])?></option>
+			<?php endforeach; ?>
+		</optgroup>
+		<?php endforeach; ?>
+	</select>
+
+	<label for="link">Link de descarga directa</label>
+	<input type="url" id="link" name="link" required maxlength="500" placeholder="https://..." value="<?=esc($ini['link'])?>">
+	<p class="ajuda">
+		Tem de ser um link que descarregue o ficheiro directamente (normalmente acaba no nome do
+		ficheiro, como <code>.nes</code>, <code>.zip</code> ou <code>.chd</code>). Páginas com um botão
+		"Download" (Google Drive, Mega) normalmente não servem.
+	</p>
+
+	<label for="nome_ficheiro">Nome do ficheiro <span class="texto-fraco">(opcional)</span></label>
+	<input type="text" id="nome_ficheiro" name="nome_ficheiro" maxlength="180" placeholder="ex.: Jogo.nes">
+	<p class="ajuda">Só se o link não acabar no nome do ficheiro com a extensão.</p>
+
+	<label for="nota">Nota para o administrador <span class="texto-fraco">(opcional)</span></label>
+	<textarea id="nota" name="nota" rows="2" maxlength="500" placeholder="ex.: é um jogo homebrew gratuito, o autor deixa distribuir"></textarea>
+
+	<div class="aviso aviso-info">
+		Sugira só jogos que podem ser partilhados: homebrew, jogos gratuitos, ou jogos cujo autor
+		deixa distribuir. Links para cópias de jogos comerciais são recusados.
+	</div>
+
+	<button type="submit" class="btn btn-largo">Enviar sugestão</button>
+</form>
+
+<div class="cartao">
+	<h2>As minhas sugestões</h2>
+	<?php if(empty($this->ver->sugestoes)): ?>
+	<p class="texto-fraco">Ainda não fez nenhuma sugestão.</p>
+	<?php else: ?>
+	<div class="tabela-rola">
+	<table>
+		<thead>
+			<tr><th>Jogo</th><th>Consola</th><th>Enviada</th><th>Estado</th><th></th></tr>
+		</thead>
+		<tbody>
+			<?php foreach ($this->ver->sugestoes as $s): $e = $estados[(int)$s['estado_sg']] ?? ['?', '']; ?>
+			<tr>
+				<td>
+					<?=esc($s['titulo_sg'])?>
+					<div class="texto-fraco texto-partido"><?=esc($s['link_sg'])?></div>
+				</td>
+				<td><?=esc(Consolas::nome($s['consola_sg']))?></td>
+				<td><?=esc(data_pt($s['dtc_sg']))?></td>
+				<td>
+					<span class="etiqueta <?=esc($e[1])?>"><?=esc($e[0])?></span>
+					<?php if((int)$s['estado_sg'] === Sugestoes::RECUSADA && $s['motivo_sg']): ?>
+					<div class="texto-fraco"><?=esc($s['motivo_sg'])?></div>
+					<?php endif; ?>
+				</td>
+				<td class="acoes">
+					<?php if((int)$s['estado_sg'] === Sugestoes::ACEITE && $s['titulo_jg'] !== null && (int)$s['stto_jg'] === 1): ?>
+					<a class="btn" href="<?=url_base('jogos/ver/'.(int)$s['jogo_sg'])?>">Jogar</a>
+					<?php elseif((int)$s['estado_sg'] === Sugestoes::ESPERA): ?>
+					<form method="post" action="<?=url_base('sugestoes/apagar/'.(int)$s['id_sg'])?>"
+					      onsubmit="return confirm('Retirar esta sugestão?')">
+						<?=csrf_field()?>
+						<button type="submit" class="btn btn-claro">Retirar</button>
+					</form>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+	<?php endif; ?>
+</div>

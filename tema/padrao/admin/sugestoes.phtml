@@ -1,0 +1,95 @@
+<?php
+/*
+As sugestões dos jogadores: as que esperam, e as últimas decididas.
+
+Aceitar abre o "Adicionar jogo" já preenchido (admin/novo?sugestao=7):
+é lá que o administrador revê, junta a capa e grava -- e só aí o servidor
+descarrega o link. Recusar é um POST com CSRF, com um motivo opcional
+que o jogador lê na página dele.
+
+O link é um <a> para o administrador o poder ver antes de decidir. Só
+chega aqui http:// ou https:// (Sugestoes::linkValido), e abre num
+separador novo sem referrer: o site do link não fica a saber de onde veio.
+*/
+?>
+<div class="cartao">
+	<h2>À espera (<?=count($this->ver->espera)?>)</h2>
+	<p class="texto-fraco">
+		Antes de aceitar, confirme que o jogo pode ser distribuído (homebrew, gratuito, ou com
+		autorização do autor). O site é público: o que entra no catálogo fica ao alcance de todos.
+	</p>
+
+	<?php if(empty($this->ver->espera)): ?>
+	<p class="texto-fraco">Não há sugestões à espera.</p>
+	<?php else: ?>
+	<div class="tabela-rola">
+	<table>
+		<thead>
+			<tr><th>Jogo</th><th>Consola</th><th>De</th><th>Enviada</th><th></th></tr>
+		</thead>
+		<tbody>
+			<?php foreach ($this->ver->espera as $s): ?>
+			<tr>
+				<td>
+					<strong><?=esc($s['titulo_sg'])?></strong>
+					<div class="texto-partido">
+						<a href="<?=esc($s['link_sg'])?>" target="_blank" rel="noopener noreferrer nofollow"><?=esc($s['link_sg'])?></a>
+					</div>
+					<?php if($s['nome_sg']): ?><div class="texto-fraco">Ficheiro: <code><?=esc($s['nome_sg'])?></code></div><?php endif; ?>
+					<?php if($s['nota_sg']): ?><div class="texto-fraco">Nota: <?=esc($s['nota_sg'])?></div><?php endif; ?>
+				</td>
+				<td><?=esc(Consolas::nome($s['consola_sg']))?></td>
+				<td>
+					<?=esc($s['nome_us'] ?? 'Conta apagada')?>
+					<div class="texto-fraco"><?=esc($s['email_us'] ?? '')?></div>
+				</td>
+				<td><?=esc(data_pt($s['dtc_sg'], true))?></td>
+				<td class="acoes">
+					<a class="btn" href="<?=url_base('admin/novo?sugestao='.(int)$s['id_sg'])?>">Aceitar</a>
+					<form method="post" action="<?=url_base('admin/recusar/'.(int)$s['id_sg'])?>" class="recusar">
+						<?=csrf_field()?>
+						<input type="text" name="motivo" maxlength="300" placeholder="Motivo (opcional)" aria-label="Motivo da recusa">
+						<button type="submit" class="btn btn-perigo">Recusar</button>
+					</form>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+	<?php endif; ?>
+</div>
+
+<?php if(!empty($this->ver->feitas)): ?>
+<div class="cartao">
+	<h2>Decididas há pouco</h2>
+	<div class="tabela-rola">
+	<table>
+		<thead>
+			<tr><th>Jogo</th><th>Consola</th><th>De</th><th>Decisão</th></tr>
+		</thead>
+		<tbody>
+			<?php foreach ($this->ver->feitas as $s): ?>
+			<tr>
+				<td><?=esc($s['titulo_sg'])?></td>
+				<td><?=esc(Consolas::nome($s['consola_sg']))?></td>
+				<td><?=esc($s['nome_us'] ?? 'Conta apagada')?></td>
+				<td>
+					<?php if((int)$s['estado_sg'] === Sugestoes::ACEITE): ?>
+						<span class="etiqueta">Aceite</span>
+						<?php if($s['titulo_jg'] !== null): ?>
+						<a href="<?=url_base('admin/editar/'.(int)$s['jogo_sg'])?>"><?=esc($s['titulo_jg'])?></a>
+						<?php endif; ?>
+					<?php else: ?>
+						<span class="etiqueta etiqueta-perigo">Recusada</span>
+						<?php if($s['motivo_sg']): ?><span class="texto-fraco"><?=esc($s['motivo_sg'])?></span><?php endif; ?>
+					<?php endif; ?>
+					<div class="texto-fraco"><?=esc(data_pt($s['dtr_sg'], true))?></div>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+</div>
+<?php endif; ?>

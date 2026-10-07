@@ -14,6 +14,7 @@ arrumação: a porta fecha-se em cada controlador, com so_admin().
 $itens = [
 	['jogos',      'jogos',      'casa',     'Jogos'],
 	['jogar',      'jogar/local','portatil', 'Jogar do meu computador'],
+	['sugestoes',  'sugestoes',  'mais',     'Sugerir um jogo'],
 	['gravacoes',  'gravacoes',  'gravar',   'As minhas gravações'],
 	['comandos',   'comandos',   'comando',  'Testar o comando'],
 	['bios',       'bios',       'chip',     'BIOS'],
@@ -21,25 +22,42 @@ $itens = [
 ];
 $admin = [
 	['admin',        'admin',        'grelha',   'Gerir jogos'],
+	['admin',        'admin/sugestoes', 'certo', 'Sugestões dos jogadores'],
 	['servidores',   'servidores',   'servidor', 'Servidores de jogo'],
 	['utilizadores', 'utilizadores', 'pessoas',  'Contas'],
 ];
+
+/*
+Que item fica aceso: o que tem o endereço exacto desta página (rota/acção)
+e, se nenhum o tiver, o da rota. Sem isto, em admin/sugestoes acendiam-se
+os dois itens do painel.
+*/
+$aqui = rota.'/'.acao;
+$exacto = in_array($aqui, array_column(array_merge($itens, $admin), 1), true);
+$aceso = function ($rota, $endereco) use ($aqui, $exacto) {
+	return ($endereco === $aqui || (!$exacto && $rota === rota)) ? 'active' : '';
+};
+
+//as sugestões à espera, num número em cima do ícone (só para o administrador)
+$esperam = $this->e_admin() ? Sugestoes::quantasEsperam() : 0;
 ?>
 <nav class="barra" aria-label="Navegação principal">
 	<a class="barra-marca" href="<?=url_base('jogos')?>" aria-label="<?=esc(configura('tit'))?>"><?=icone('comando', 'icone-grande')?></a>
 
 	<div class="barra-nav">
 		<?php foreach ($itens as [$rota, $endereco, $ic, $texto]): ?>
-		<a class="<?=__($rota)?>" href="<?=url_base($endereco)?>" aria-label="<?=esc($texto)?>">
+		<a class="<?=$aceso($rota, $endereco)?>" href="<?=url_base($endereco)?>" aria-label="<?=esc($texto)?>">
 			<span class="dica"><?=esc($texto)?></span><?=icone($ic)?>
+			<?php if($endereco === 'admin/sugestoes' && $esperam > 0): ?><span class="barra-conta"><?=(int)$esperam?></span><?php endif; ?>
 		</a>
 		<?php endforeach; ?>
 
 		<?php if($this->e_admin()): ?>
 		<span class="barra-sep"></span>
 		<?php foreach ($admin as [$rota, $endereco, $ic, $texto]): ?>
-		<a class="<?=__($rota)?>" href="<?=url_base($endereco)?>" aria-label="<?=esc($texto)?>">
+		<a class="<?=$aceso($rota, $endereco)?>" href="<?=url_base($endereco)?>" aria-label="<?=esc($texto)?>">
 			<span class="dica"><?=esc($texto)?></span><?=icone($ic)?>
+			<?php if($endereco === 'admin/sugestoes' && $esperam > 0): ?><span class="barra-conta"><?=(int)$esperam?></span><?php endif; ?>
 		</a>
 		<?php endforeach; ?>
 		<?php endif; ?>

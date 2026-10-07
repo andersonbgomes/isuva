@@ -1,0 +1,26 @@
+{
+  "segredo": "COPIAR-DO-PAINEL-DO-SITE-Servidores-de-jogo",
+  "capacidade": 2,
+  "porta_api": 7000,
+  "porta_interna": 9000,
+  "cache": "/var/lib/isuva/cache",
+  "cache_max_gb": 200,
+  "cartoes": "/var/lib/isuva/cartoes",
+  "sem_sinal": 300,
+  "duracao_max": 14400,
+  "motor": "docker",
+  "docker": {
+    "imagem": "isuva-ps2:latest",
+    "gpus": "all",
+    "porta_contentor": 8080,
+    "resolucao": [1280, 720],
+    "codificador": "nvh264enc",
+    "env": {
+      "SELKIES_TURN_HOST": "no1.exemplo.ao",
+      "SELKIES_TURN_PORT": "3478",
+      "SELKIES_TURN_PROTOCOL": "udp",
+      "SELKIES_TURN_USERNAME": "isuva",
+      "SELKIES_TURN_PASSWORD": "TROCAR-palavra-passe-do-coturn"
+    }
+  }
+}

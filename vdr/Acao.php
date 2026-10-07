@@ -38,7 +38,9 @@ abstract class Acao {
 	acrescenta-se a esta lista -- e a cada uma que se acrescente deve
 	corresponder uma protecção própria, escrita no controlador.
 	*/
-	const SEM_SESSAO = ['AuthControlo'];
+	//NoControlo: quem pede é o agente de um nó de jogo, protegido por
+	//endereços assinados (ver o comentário no topo dele)
+	const SEM_SESSAO = ['AuthControlo', 'NoControlo'];
 
 	public function __construct() {
 		$this->ver = new stdClass();

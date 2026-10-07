@@ -19,6 +19,14 @@ página para página nota-se logo, e lê-se como remendo.
 					}
 					break;
 
+				case 'servidores':
+					if(acao !== 'index'){
+						?><a class="btn btn-claro" href="<?=url_base('servidores')?>">Voltar à lista</a><?php
+					} else {
+						?><a class="btn" href="<?=url_base('servidores/novo')?>">Acrescentar servidor</a><?php
+					}
+					break;
+
 				case 'admin':
 					if(acao !== 'index'){
 						?><a class="btn btn-claro" href="<?=url_base('admin')?>">Voltar à lista</a><?php

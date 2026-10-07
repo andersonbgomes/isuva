@@ -19,6 +19,7 @@ $jogo = $jogo ?? [];
 			<option value="<?=esc($chave)?>"
 			        data-ext="<?=esc(implode(',', Consolas::extensoes($chave)))?>"
 			        data-nota="<?=esc($c['nota'])?>"
+			        data-max-texto="<?=esc(Armazem::legivel(Consolas::tamanhoMax($chave)))?>"
 			        <?=($jogo['consola_jg'] ?? '') === $chave ? 'selected' : ''?>><?=esc($c['nome'])?></option>
 			<?php endforeach; ?>
 		</optgroup>

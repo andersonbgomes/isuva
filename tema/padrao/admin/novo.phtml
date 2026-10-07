@@ -24,7 +24,7 @@ ao gravar (ver lib/jogos/Descarga.php).
 	</div>
 
 	<div id="por-ficheiro">
-		<label for="ficheiro">Ficheiro do jogo <span class="texto-fraco">(até <?=esc(Armazem::legivel($this->ver->tamanhoMax))?>)</span></label>
+		<label for="ficheiro">Ficheiro do jogo <span class="texto-fraco" id="limite"></span></label>
 		<!-- sem name: o ficheiro não vai no formulário, vai aos pedaços -->
 		<input type="file" id="ficheiro">
 		<div class="progresso" id="progresso" hidden><div></div></div>
@@ -51,6 +51,7 @@ ao gravar (ver lib/jogos/Descarga.php).
 	<button type="submit" class="btn btn-largo" id="gravar">Gravar</button>
 </form>
 
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/envio.js')?>"></script>
 <script>
 (function () {
 	var form      = document.getElementById('form-jogo');
@@ -88,64 +89,21 @@ ao gravar (ver lib/jogos/Descarga.php).
 		estado.className = 'ajuda' + (erro ? ' erro' : '');
 	}
 
-	function esperar(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
-
-	//a resposta do servidor em JSON, ou um erro legível (uma sessão expirada devolve HTML)
-	function lerJson(r) {
-		return r.json().catch(function () { return { erro: 'O servidor respondeu de forma inesperada. A sessão pode ter expirado: recarregue a página.' }; });
-	}
-
 	async function enviar(f, minhaVez) {
-		var fd = new FormData();
-		fd.append('csrf_token', csrf);
-		fd.append('nome', f.name);
-		fd.append('tamanho', f.size);
-		fd.append('consola', consola.value);
-
-		var r = await fetch(URL_INICIAR, { method: 'POST', body: fd, credentials: 'same-origin' });
-		var d = await lerJson(r);
-		if (!r.ok || !d.envio) { throw new Error(d.erro || 'Não foi possível começar o envio.'); }
-
-		var id = d.envio, tamanho = d.pedaco, pos = 0, falhas = 0;
-
-		while (pos < f.size) {
-			if (minhaVez !== vez) { return; }   //escolheram outro ficheiro entretanto
-
-			try {
-				r = await fetch(URL_PEDACO, {
-					method: 'POST',
-					credentials: 'same-origin',
-					body: f.slice(pos, pos + tamanho),
-					headers: {
-						'Content-Type': 'application/octet-stream',
-						'X-CSRF-Token': csrf,
-						'X-Envio': id,
-						'X-Posicao': String(pos)
-					}
-				});
-				d = await lerJson(r);
-			} catch (e) {
-				/*
-				Falha de rede: tenta outra vez, com uma espera cada vez maior.
-				O servidor só aceita o pedaço na posição certa, por isso
-				repetir nunca estraga o ficheiro.
-				*/
-				if (++falhas > 6) { throw new Error('A ligação falhou várias vezes seguidas. Tente outra vez.'); }
-				dizer('A ligação falhou. A tentar outra vez...');
-				await esperar(2000 * falhas);
-				continue;
+		var id = await enviarAosPedacos({
+			ficheiro:  f,
+			campos:    { consola: consola.value },
+			csrf:      csrf,
+			iniciar:   URL_INICIAR,
+			pedaco:    URL_PEDACO,
+			aviso:     dizer,
+			parar:     function () { return minhaVez !== vez; },   //escolheram outro ficheiro entretanto
+			progresso: function (pct) {
+				barra.firstElementChild.style.width = pct + '%';
+				dizer('A enviar... ' + pct + '%');
 			}
-
-			//409: o servidor diz onde o envio realmente está, e continua-se daí
-			if (r.status === 409 && typeof d.posicao === 'number') { pos = d.posicao; continue; }
-			if (!r.ok) { throw new Error(d.erro || 'O servidor recusou o envio.'); }
-
-			pos = d.posicao;
-			falhas = 0;
-			var pct = Math.floor(pos / f.size * 100);
-			barra.firstElementChild.style.width = pct + '%';
-			dizer('A enviar... ' + pct + '%');
-		}
+		});
+		if (id === null) { return; }
 
 		envio.value = id;
 		dizer('Enviado. Já pode gravar.');
@@ -178,6 +136,14 @@ ao gravar (ver lib/jogos/Descarga.php).
 	}
 
 	ficheiro.addEventListener('change', comecar);
+
+	//o limite de tamanho depende da consola (data-max em _campos.phtml)
+	function mostrarLimite() {
+		var o = consola.options[consola.selectedIndex];
+		document.getElementById('limite').textContent = o && o.dataset.maxTexto ? '(até ' + o.dataset.maxTexto + ')' : '';
+	}
+	consola.addEventListener('change', mostrarLimite);
+	mostrarLimite();
 
 	//a consola mudou depois do envio: avisa já se o ficheiro deixou de servir
 	consola.addEventListener('change', function () {

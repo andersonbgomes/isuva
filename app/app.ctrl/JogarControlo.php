@@ -7,15 +7,21 @@ JOGAR: a página do emulador, e os ficheiros que ela pede.
     /jogar/ficheiro/7/<nome>       a ROM/ISO do jogo 7 (pedida pelo emulador)
     /jogar/capa/7                  a capa do jogo 7
     /jogar/bios/<consola>/<nome>   a BIOS de uma consola
+    /jogar/pedir/7                 (POST) um lugar num nó de jogo, para a PS2
+    /jogar/estado/<sessão>         (POST) como está a sessão, e sinal de vida
+    /jogar/terminar/<sessão>       (POST) sair e libertar o lugar
 
 ONDE O JOGO CORRE
 
-No browser de quem joga, e não no servidor. O servidor entrega a página,
-o EmulatorJS (núcleos do RetroArch compilados para WebAssembly) e o
-ficheiro do jogo -- daí para a frente é o computador da pessoa que faz o
-trabalho. É por isso que isto aguenta muitos jogadores num alojamento PHP
-normal, e é também por isso que PS2 e PS3 não estão aqui: precisam de um
-servidor com placa gráfica a correr o jogo e a enviar vídeo (Fase 2).
+Depende do 'modo' da consola (lib/jogos/Consolas.php):
+
+  browser   no browser de quem joga. O servidor entrega a página, o
+            EmulatorJS e o ficheiro do jogo -- daí para a frente é o
+            computador da pessoa que faz o trabalho, e por isso um
+            alojamento PHP normal aguenta muitos jogadores.
+  servidor  (PS2) num nó de jogo com placa gráfica, e a imagem chega por
+            streaming. A página só pede um lugar (pedir), pergunta pelo
+            estado (estado) e mostra o nó num <iframe> quando está pronto.
 
 O MODO "DO MEU COMPUTADOR" NÃO ENVIA NADA
 
@@ -42,10 +48,24 @@ class JogarControlo extends Acao {
 				'Este jogo é de uma consola que o site já não suporta. Edite-o no painel.', 'jogos');
 		}
 
-		$this->isolar();
-
 		$this->ver->jogo    = $jogo;
 		$this->ver->consola = $consola;
+
+		/*
+		PS2 (e o que mais correr no servidor): a página não tem emulador
+		nenhum. Pede um lugar num nó de jogo e mostra a imagem que vem de
+		lá -- ver stream.phtml e lib/jogos/Fila.php.
+
+		Sem isolar(): a página embebe o nó num <iframe> de outro endereço,
+		e com COEP o browser recusava-o.
+		*/
+		if($consola['modo'] === 'servidor'){
+			$this->renderizar_solto('stream');
+			return;
+		}
+
+		$this->isolar();
+
 		$this->ver->emu     = $this->configEmulador($jogo['consola_jg']);
 		$this->ver->emu['gameUrl']  = url_base('jogar/ficheiro/'.(int)$jogo['id_jg'].'/'.rawurlencode($jogo['nome_jg']));
 		$this->ver->emu['gameName'] = $jogo['titulo_jg'];
@@ -65,6 +85,8 @@ class JogarControlo extends Acao {
 		*/
 		$porConsola = [];
 		foreach (Consolas::LISTA as $chave => $c) {
+			//as de servidor (PS2) não correm a partir de um ficheiro local
+			if($c['modo'] !== 'browser'){ continue; }
 			$porConsola[$chave] = $this->configEmulador($chave) + [
 				'nome' => $c['nome'],
 				'ext'  => Consolas::extensoes($chave),
@@ -75,6 +97,51 @@ class JogarControlo extends Acao {
 
 		$this->ver->consolas = $porConsola;
 		$this->renderizar_solto('local');
+	}
+
+	//=============================================================
+	// As sessões no nó de jogo (PS2) -- pedidos JSON da stream.phtml
+	//=============================================================
+
+	/*
+	POST /jogar/pedir/<id do jogo>: um lugar na fila para este jogo.
+
+	É um POST, e não acontece só por abrir a página: pedir uma sessão
+	ocupa (ou põe na fila para ocupar) uma placa gráfica, e isso não pode
+	ser disparado por um pré-carregamento do browser ou por um link.
+	*/
+	public function pedir() {
+		$this->soPostJson();
+
+		$jogo = $this->jogo(id);
+		if(empty($jogo) || (!$this->e_admin() && (int)$jogo['stto_jg'] !== 1) || !Consolas::noServidor($jogo['consola_jg'])){
+			$this->json(['erro' => 'Esse jogo não existe ou não corre no servidor.'], 404);
+		}
+
+		$s = Fila::pedir(utilizador_actual(), $jogo);
+		if(is_string($s)){
+			$this->json(['erro' => $s], 422);
+		}
+
+		$this->json(['sessao' => (int)$s['id_ss']] + Fila::consultar($s));
+	}
+
+	/*
+	POST /jogar/estado/<id da sessão>: como está a sessão. É também o
+	sinal de vida da página: sem ele, a sessão termina (Fila::SEM_SINAL).
+	*/
+	public function estado() {
+		$this->soPostJson();
+		$s = $this->minhaSessao(id);
+		$this->json(Fila::consultar($s));
+	}
+
+	//POST /jogar/terminar/<id da sessão>: o jogador saiu, o lugar liberta-se já
+	public function terminar() {
+		$this->soPostJson();
+		$s = $this->minhaSessao(id);
+		Fila::terminar($s, 'O jogador terminou a sessão.');
+		$this->json(['estado' => 'terminada']);
 	}
 
 	public function ficheiro() {
@@ -119,6 +186,33 @@ class JogarControlo extends Acao {
 	//=============================================================
 	// Ajudantes
 	//=============================================================
+
+	/*
+	Uma sessão do utilizador com sessão aberta, e só dele. O id vem do
+	endereço: sem esta verificação, qualquer pessoa terminava (ou via o
+	endereço de entrada de) a sessão de outra só por mudar um número.
+	*/
+	private function minhaSessao($id) {
+		$s = Fila::sessao($id);
+		if(empty($s) || (int)$s['us_ss'] !== utilizador_actual()){
+			$this->json(['erro' => 'Essa sessão não existe.'], 404);
+		}
+		return $s;
+	}
+
+	private function soPostJson() {
+		if($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valido()){
+			$this->json(['erro' => 'A sessão expirou. Recarregue a página.'], 403);
+		}
+	}
+
+	private function json($dados, $codigo = 200) {
+		http_response_code($codigo);
+		header('Content-Type: application/json; charset=utf-8');
+		header('Cache-Control: no-store');
+		echo json_encode($dados, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		exit;
+	}
 
 	private function jogo($id) {
 		$j = new Jogo;

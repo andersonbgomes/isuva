@@ -1,15 +1,27 @@
 # Este projecto
 
-Um site de jogos retro: catálogo gerido por um administrador, e as
-consolas (Nintendo, Sega, PS1, PSP) emuladas **no browser de quem joga**
-pelo EmulatorJS. PHP, MVC simples, **sem framework** — ver o `LEIA-ME.md`.
+Um site de jogos retro: catálogo gerido por um administrador. A maior
+parte das consolas (Nintendo, Sega, PS1, PSP) corre **no browser de quem
+joga**, pelo EmulatorJS. A PS2 corre **num nó de jogo** (máquina com GPU)
+e chega por streaming. PHP, MVC simples, **sem framework**; ver o
+`LEIA-ME.md`.
 
-O domínio dos jogos vive em `lib/jogos/`: `Consolas.php` (que consolas,
-que núcleo, que extensões), `Armazem.php` (ficheiros no disco, envios aos
-pedaços, servir com Range), `Descarga.php` (importar por link, com
-protecção SSRF) e `Bios.php`. PS2/PS3 não cabem no browser: são a Fase 2,
-com streaming a partir de um servidor com GPU — não se acrescentam à
-`Consolas::LISTA`.
+O domínio dos jogos vive em `lib/jogos/`:
+
+- `Consolas.php`: que consolas, que núcleo, que extensões, e o `modo`
+  (`browser` ou `servidor`);
+- `Armazem.php`: os ficheiros no disco, os envios aos pedaços, e servir
+  com Range;
+- `Descarga.php`: importar por link, com protecção SSRF;
+- `Bios.php`;
+- `Fila.php`: as sessões nos nós, a fila, os lugares abandonados;
+- `Agente.php`: os pedidos assinados ao nó, e os endereços assinados que
+  o nó usa para descarregar daqui.
+
+`no-de-jogo/` é o programa da máquina com GPU (Python, Docker, nginx).
+Não corre no site, e o site não o serve. A assinatura HMAC dos pedidos
+tem de ser igual nos dois lados (`Agente::assinar()` e `assinar()` no
+`agente.py`): mudar uma é mudar as duas.
 
 ## Estrutura
 
@@ -27,7 +39,10 @@ com streaming a partir de um servidor com GPU — não se acrescentam à
 - `migrations/` — as alterações à base de dados, uma por ficheiro.
 - `armazem/` — os jogos, capas e BIOS enviados (fora do git, fechado ao
   exterior). Nada daqui é servido directamente: sai tudo pelo
-  `JogarControlo`, depois de verificar a sessão.
+  `JogarControlo` (depois de verificar a sessão) ou pelo `NoControlo`
+  (endereço assinado, para o nó de jogo).
+- `no-de-jogo/` — o agente do nó de jogo e a imagem Docker da PS2. Tem o
+  seu `LEIA-ME.md`; validar com `python3 -m py_compile` antes de commitar.
 
 O construtor de `Acao` exige sessão iniciada em todos os controladores
 excepto os da lista `Acao::SEM_SESSAO`.

@@ -33,7 +33,7 @@ $JSON = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESC
 	<label for="consola">Consola</label>
 	<select id="consola" required>
 		<option value="">Escolha a consola</option>
-		<?php foreach (Consolas::porFamilia() as $familia => $lista): ?>
+		<?php foreach (Consolas::porFamilia('browser') as $familia => $lista): ?>
 		<optgroup label="<?=esc($familia)?>">
 			<?php foreach ($lista as $chave => $c): ?>
 			<option value="<?=esc($chave)?>"><?=esc($c['nome'])?></option>

@@ -61,7 +61,6 @@ class AdminControlo extends Acao {
 		$this->so_admin();
 		Armazem::limparEnviosVelhos();
 
-		$this->ver->tamanhoMax = TAMANHO_MAX_JOGO;
 		$this->ver->temCurl    = function_exists('curl_init');
 		$this->renderizar('novo');
 	}
@@ -84,12 +83,32 @@ class AdminControlo extends Acao {
 		if(!Consolas::existe($consola)){
 			$this->json(['erro' => 'Escolha a consola primeiro.'], 422);
 		}
+
+		/*
+		Uma BIOS também pode vir aos pedaços: a da PS2 tem 4 MB, e o
+		upload_max_filesize de muitos alojamentos é 2 MB. As regras são
+		outras -- qualquer extensão (cada consola tem os seus nomes), e o
+		limite de TAMANHO_MAX_BIOS.
+		*/
+		$tipo = (($_POST['tipo'] ?? '') === 'bios') ? 'bios' : 'jogo';
+		if($tipo === 'bios'){
+			if(Consolas::pegar($consola)['bios'] === 'nao'){
+				$this->json(['erro' => 'Essa consola não usa BIOS.'], 422);
+			}
+			if($nome === '' || $tamanho <= 0 || $tamanho > TAMANHO_MAX_BIOS){
+				$this->json(['erro' => 'A BIOS tem de ter um nome e menos de '.Armazem::legivel(TAMANHO_MAX_BIOS).'.'], 422);
+			}
+			$this->json(['envio' => Armazem::envioNovo($nome, $tamanho, 'bios'), 'pedaco' => Armazem::tamanhoPedaco()]);
+		}
+
 		if($nome === '' || !Consolas::aceita($consola, $nome)){
 			$this->json(['erro' => 'Um ficheiro .'.pathinfo($nome, PATHINFO_EXTENSION).' não serve para '
 				.Consolas::nome($consola).'. Aceites: '.implode(', ', Consolas::extensoes($consola)).'.'], 422);
 		}
-		if($tamanho <= 0 || $tamanho > TAMANHO_MAX_JOGO){
-			$this->json(['erro' => 'O ficheiro tem de ter entre 1 byte e '.Armazem::legivel(TAMANHO_MAX_JOGO).'.'], 422);
+		//o limite é da consola: 2 GB nas de browser, mais nas que correm no nó
+		$max = Consolas::tamanhoMax($consola);
+		if($tamanho <= 0 || $tamanho > $max){
+			$this->json(['erro' => 'O ficheiro tem de ter entre 1 byte e '.Armazem::legivel($max).'.'], 422);
 		}
 
 		/*
@@ -344,6 +363,24 @@ class AdminControlo extends Acao {
 			$this->voltar('warning', 'BIOS', 'Essa consola não usa BIOS.', 'admin/emulador');
 		}
 
+		/*
+		Pelo envio aos pedaços (o normal: emulador.phtml usa o envio.js),
+		ou, se o JavaScript não correu, pelo formulário clássico -- que só
+		passa se a BIOS couber no upload_max_filesize do servidor.
+		*/
+		$envio = (string)($_POST['envio'] ?? '');
+		if($envio !== ''){
+			if(!Armazem::envioValido($envio) || ($_SESSION['envios'][$envio]['tipo'] ?? '') !== 'bios'){
+				$this->voltar('warning', 'BIOS', 'O envio da BIOS não chegou completo. Tente outra vez.', 'admin/emulador');
+			}
+			$r = Armazem::envioConcluir($envio, 'bios');
+			if($r === null){
+				$this->voltar('warning', 'BIOS', 'O envio da BIOS não chegou completo. Tente outra vez.', 'admin/emulador');
+			}
+			Bios::guardar($consola, $r['disco'], $r['nome']);
+			$this->voltar('success', 'BIOS', 'A BIOS de '.$c['nome'].' foi gravada.', 'admin/emulador');
+		}
+
 		$f = $_FILES['bios'] ?? null;
 		if(!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])){
 			$this->voltar('warning', 'BIOS', $this->erroEnvio($f['error'] ?? UPLOAD_ERR_NO_FILE), 'admin/emulador');
@@ -458,6 +495,10 @@ class AdminControlo extends Acao {
 
 		//a extensão foi verificada no iniciar(), mas a consola pode ter
 		//mudado no formulário entretanto
+		//um envio aberto para BIOS não vira jogo
+		if(($_SESSION['envios'][$id]['tipo'] ?? 'jogo') !== 'jogo'){
+			return 'Escolha o ficheiro do jogo e espere que o envio chegue aos 100%.';
+		}
 		$nome = $_SESSION['envios'][$id]['nome'];
 		if(!Consolas::aceita($consola, $nome)){
 			return 'O ficheiro '.$nome.' não serve para '.Consolas::nome($consola).'.';
@@ -477,7 +518,7 @@ class AdminControlo extends Acao {
 			return 'Escreva o link do jogo (no máximo '.self::MAX_LINK.' caracteres).';
 		}
 
-		$r = Descarga::buscar($link, TAMANHO_MAX_JOGO);
+		$r = Descarga::buscar($link, Consolas::tamanhoMax($consola));
 		if(is_string($r)){ return $r; }
 
 		/*

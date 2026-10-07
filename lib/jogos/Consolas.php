@@ -24,12 +24,24 @@ CADA ENTRADA
               JogarControlo::isolar().
     nota      uma linha para quem escolhe a consola
 
-O QUE FICA DE FORA, E PORQUÊ
+    modo      'browser' ou 'servidor' -- ver abaixo
+    max       só nas de 'servidor': o maior ficheiro aceite
 
-PS2, PS3, GameCube, Wii e Switch não têm emulador que corra no browser
-com velocidade jogável. Essas consolas só entram na Fase 2, a correr num
-servidor com placa gráfica e com a imagem enviada por streaming -- não é
-uma questão de acrescentar uma linha aqui.
+DOIS MODOS DE CORRER
+
+    browser   o EmulatorJS corre no browser de quem joga. Barato: o
+              servidor só entrega a página e o ficheiro.
+    servidor  o emulador corre num NÓ DE JOGO (uma máquina com placa
+              gráfica, ver no-de-jogo/) e a imagem chega ao browser por
+              streaming (WebRTC). É o único caminho para a PS2: não há
+              emulador de PS2 que corra num browser a velocidade jogável.
+              Cada jogador ocupa um lugar no nó enquanto joga -- é caro,
+              e é por isso que há fila (ver lib/jogos/Fila.php).
+
+A PS3 NÃO ESTÁ AQUI. Também seria 'servidor', mas o RPCS3 pede uma
+máquina inteira por jogador e só corre bem uma parte dos jogos. Entra
+quando houver um nó medido que o aguente -- e entra como a PS2, com um
+'nucleo' que o no-de-jogo/ saiba arrancar.
 */
 class Consolas {
 
@@ -40,73 +52,88 @@ class Consolas {
 	const LISTA = [
 		'nes' => [
 			'nome' => 'Nintendo (NES)', 'familia' => 'Nintendo', 'nucleo' => 'nes',
-			'ext' => ['nes', 'fds', 'unf', 'unif'], 'bios' => 'nao', 'threads' => false,
+			'ext' => ['nes', 'fds', 'unf', 'unif'], 'bios' => 'nao', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Muito leve. Corre em qualquer computador ou telemóvel.',
 		],
 		'snes' => [
 			'nome' => 'Super Nintendo', 'familia' => 'Nintendo', 'nucleo' => 'snes',
-			'ext' => ['sfc', 'smc', 'fig', 'swc', 'bs'], 'bios' => 'nao', 'threads' => false,
+			'ext' => ['sfc', 'smc', 'fig', 'swc', 'bs'], 'bios' => 'nao', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Leve.',
 		],
 		'n64' => [
 			'nome' => 'Nintendo 64', 'familia' => 'Nintendo', 'nucleo' => 'n64',
-			'ext' => ['n64', 'z64', 'v64'], 'bios' => 'nao', 'threads' => false,
+			'ext' => ['n64', 'z64', 'v64'], 'bios' => 'nao', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Pede um computador razoável.',
 		],
 		'gb' => [
 			'nome' => 'Game Boy / Game Boy Color', 'familia' => 'Nintendo', 'nucleo' => 'gb',
-			'ext' => ['gb', 'gbc', 'dmg'], 'bios' => 'nao', 'threads' => false,
+			'ext' => ['gb', 'gbc', 'dmg'], 'bios' => 'nao', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Muito leve.',
 		],
 		'gba' => [
 			'nome' => 'Game Boy Advance', 'familia' => 'Nintendo', 'nucleo' => 'gba',
-			'ext' => ['gba'], 'bios' => 'opcional', 'threads' => false,
+			'ext' => ['gba'], 'bios' => 'opcional', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Leve. A BIOS é opcional.',
 		],
 		'nds' => [
 			'nome' => 'Nintendo DS', 'familia' => 'Nintendo', 'nucleo' => 'nds',
-			'ext' => ['nds'], 'bios' => 'opcional', 'threads' => false,
+			'ext' => ['nds'], 'bios' => 'opcional', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Pede um computador razoável.',
 		],
 		'segaMS' => [
 			'nome' => 'Sega Master System', 'familia' => 'Sega', 'nucleo' => 'segaMS',
-			'ext' => ['sms'], 'bios' => 'nao', 'threads' => false,
+			'ext' => ['sms'], 'bios' => 'nao', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Muito leve.',
 		],
 		'segaGG' => [
 			'nome' => 'Sega Game Gear', 'familia' => 'Sega', 'nucleo' => 'segaGG',
-			'ext' => ['gg'], 'bios' => 'nao', 'threads' => false,
+			'ext' => ['gg'], 'bios' => 'nao', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Muito leve.',
 		],
 		'segaMD' => [
 			'nome' => 'Sega Mega Drive / Genesis', 'familia' => 'Sega', 'nucleo' => 'segaMD',
-			'ext' => ['md', 'smd', 'gen', 'bin'], 'bios' => 'nao', 'threads' => false,
+			'ext' => ['md', 'smd', 'gen', 'bin'], 'bios' => 'nao', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Leve.',
 		],
 		'segaCD' => [
 			'nome' => 'Sega CD / Mega CD', 'familia' => 'Sega', 'nucleo' => 'segaCD',
-			'ext' => ['cue', 'iso', 'chd', 'm3u'], 'bios' => 'obrigatoria', 'threads' => false,
+			'ext' => ['cue', 'iso', 'chd', 'm3u'], 'bios' => 'obrigatoria', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Precisa da BIOS. Enviar o .cue e o .bin juntos num .zip, ou um .chd.',
 		],
 		'sega32x' => [
 			'nome' => 'Sega 32X', 'familia' => 'Sega', 'nucleo' => 'sega32x',
-			'ext' => ['32x'], 'bios' => 'nao', 'threads' => false,
+			'ext' => ['32x'], 'bios' => 'nao', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Leve.',
 		],
 		'segaSaturn' => [
 			'nome' => 'Sega Saturn', 'familia' => 'Sega', 'nucleo' => 'segaSaturn',
-			'ext' => ['cue', 'iso', 'chd', 'ccd', 'm3u'], 'bios' => 'opcional', 'threads' => false,
+			'ext' => ['cue', 'iso', 'chd', 'ccd', 'm3u'], 'bios' => 'opcional', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Pesado e com compatibilidade irregular. A BIOS melhora muito.',
 		],
 		'psx' => [
 			'nome' => 'PlayStation 1', 'familia' => 'PlayStation', 'nucleo' => 'psx',
-			'ext' => ['cue', 'bin', 'img', 'iso', 'chd', 'pbp', 'm3u', 'ccd'], 'bios' => 'opcional', 'threads' => false,
+			'ext' => ['cue', 'bin', 'img', 'iso', 'chd', 'pbp', 'm3u', 'ccd'], 'bios' => 'opcional', 'threads' => false, 'modo' => 'browser',
 			'nota' => 'Leve. Melhor em .chd, ou .cue + .bin juntos num .zip. A BIOS é opcional, mas recomendada.',
 		],
 		'psp' => [
 			'nome' => 'PlayStation Portable (PSP)', 'familia' => 'PlayStation', 'nucleo' => 'psp',
-			'ext' => ['iso', 'cso', 'pbp', 'elf'], 'bios' => 'nao', 'threads' => true,
+			'ext' => ['iso', 'cso', 'pbp', 'elf'], 'bios' => 'nao', 'threads' => true, 'modo' => 'browser',
 			'nota' => 'Pede um computador bom e um browser recente (Chrome, Edge ou Firefox).',
+		],
+		/*
+		A PS2 corre no nó de jogo, com o PCSX2 (o 'nucleo' é o nome que o
+		agente do nó reconhece). Sem .zip/.7z: o PCSX2 não os abre.
+		Os jogos em CD de PS2 (poucos) vêm em .bin/.cue -- convertem-se
+		para .chd, que é um ficheiro só e mais pequeno.
+
+		Até 9 GB: um DVD de camada dupla tem 8,5 GB. O limite de 2 GB das
+		outras é do browser, que aqui não carrega o jogo.
+		*/
+		'ps2' => [
+			'nome' => 'PlayStation 2', 'familia' => 'PlayStation', 'nucleo' => 'pcsx2',
+			'ext' => ['iso', 'chd', 'cso', 'zso'], 'bios' => 'obrigatoria', 'threads' => false,
+			'modo' => 'servidor', 'max' => 9 * 1024 * 1024 * 1024,
+			'nota' => 'Corre no nosso servidor e chega por streaming: precisa de boa internet, não de um bom computador. Precisa da BIOS. Melhor em .chd.',
 		],
 	];
 
@@ -123,19 +150,37 @@ class Consolas {
 		return self::LISTA[$chave]['nome'] ?? (string)$chave;
 	}
 
-	//as consolas agrupadas por família, para os <optgroup> e o catálogo
-	public static function porFamilia() {
+	/*
+	As consolas agrupadas por família, para os <optgroup> e o catálogo.
+
+	Com $modo ('browser' ou 'servidor'), só as desse modo -- o "jogar do
+	meu computador" só serve as de browser: um jogo de PS2 do computador
+	da pessoa teria de ser enviado inteiro para o nó primeiro.
+	*/
+	public static function porFamilia($modo = null) {
 		$grupos = [];
 		foreach (self::LISTA as $chave => $c) {
+			if($modo !== null && $c['modo'] !== $modo){ continue; }
 			$grupos[$c['familia']][$chave] = $c;
 		}
 		return $grupos;
 	}
 
-	//todas as extensões que uma consola aceita, comprimidos incluídos
+	public static function noServidor($chave) {
+		return (self::LISTA[$chave]['modo'] ?? '') === 'servidor';
+	}
+
+	//todas as extensões que uma consola aceita (comprimidos só nas de browser:
+	//é o EmulatorJS que os abre, e o PCSX2 não sabe)
 	public static function extensoes($chave) {
 		$c = self::pegar($chave);
-		return $c ? array_merge($c['ext'], self::COMPRIMIDOS) : [];
+		if(!$c){ return []; }
+		return $c['modo'] === 'browser' ? array_merge($c['ext'], self::COMPRIMIDOS) : $c['ext'];
+	}
+
+	//o maior ficheiro aceite para uma consola (ver TAMANHO_MAX_JOGO)
+	public static function tamanhoMax($chave) {
+		return (int)(self::LISTA[$chave]['max'] ?? TAMANHO_MAX_JOGO);
 	}
 
 	/*

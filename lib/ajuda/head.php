@@ -36,6 +36,14 @@ function titulo(){
 			}
 			break;
 
+		case 'servidores':
+			switch (acao) {
+				case 'novo':   $titulo = 'Novo servidor de jogo';    break;
+				case 'editar': $titulo = 'Editar servidor de jogo';  break;
+				default:       $titulo = 'Servidores de jogo';       break;
+			}
+			break;
+
 		case 'admin':
 			switch (acao) {
 				case 'novo':     $titulo = 'Adicionar jogo';    break;

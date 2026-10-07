@@ -1,0 +1,4 @@
+# O programa do nó de jogo vive no mesmo repositório do site, mas não é
+# do site: corre noutra máquina. Nada daqui se serve a ninguém -- muito
+# menos uma config.json com o segredo, se alguém a deixar aqui por engano.
+Require all denied

@@ -1,0 +1,93 @@
+<?php
+/*
+Os nós de jogo, com o estado perguntado agora a cada um, e as sessões
+que estão a ocupar (ou à espera de) um lugar.
+*/
+$nomesEstado = ['fila' => 'Na fila', 'a_preparar' => 'A preparar', 'a_jogar' => 'A jogar'];
+?>
+<div class="cartao">
+	<h3>Máquinas</h3>
+	<p class="texto-fraco">
+		Máquinas com placa gráfica onde corre a PS2. A instalação de cada uma está em
+		<code>no-de-jogo/LEIA-ME.md</code>.
+	</p>
+
+	<?php if(empty($this->ver->nos)): ?>
+	<p>Ainda não há nenhum. Sem servidor, os jogos de PS2 ficam na fila para sempre.
+		<a href="<?=url_base('servidores/novo')?>">Acrescentar o primeiro</a>.</p>
+	<?php else: ?>
+	<div class="tabela-rola">
+	<table>
+		<thead>
+			<tr><th>Nome</th><th>Lugares</th><th>Estado agora</th><th></th></tr>
+		</thead>
+		<tbody>
+			<?php foreach ($this->ver->nos as $no): $e = $no['_estado']; ?>
+			<tr>
+				<td>
+					<strong><?=esc($no['nome_no'])?></strong><br>
+					<code><?=esc($no['api_no'])?></code>
+				</td>
+				<td><?=(int)$no['capacidade_no']?></td>
+				<td>
+					<?php if((int)$no['stto_no'] !== 1): ?>
+						<span class="texto-fraco">Desligado no painel</span>
+					<?php elseif($e['ok']): ?>
+						<span class="estado-ok">Responde</span> &middot;
+						<?=(int)($e['dados']['ocupados'] ?? 0)?> de <?=(int)($e['dados']['capacidade'] ?? 0)?> lugares ocupados
+						<?php if((int)($e['dados']['capacidade'] ?? 0) !== (int)$no['capacidade_no']): ?>
+						<br><span class="estado-mal">O agente tem <?=(int)($e['dados']['capacidade'] ?? 0)?> lugares configurados, e aqui estão <?=(int)$no['capacidade_no']?>. Acerte os dois.</span>
+						<?php endif; ?>
+					<?php else: ?>
+						<span class="estado-mal">Não responde</span><br>
+						<small class="texto-fraco"><?=esc($e['erro'])?></small>
+					<?php endif; ?>
+				</td>
+				<td class="acoes">
+					<a class="btn btn-claro" href="<?=url_base('servidores/editar/'.(int)$no['id_no'])?>">Editar</a>
+					<form method="post" action="<?=url_base('servidores/apagar/'.(int)$no['id_no'])?>"
+					      onsubmit="return confirm('Remover este servidor? Quem lá estiver a jogar sai.')">
+						<?=csrf_field()?>
+						<button type="submit" class="btn btn-perigo">Remover</button>
+					</form>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+	<?php endif; ?>
+</div>
+
+<div class="cartao">
+	<h3>Sessões activas</h3>
+	<?php if(empty($this->ver->sessoes)): ?>
+	<p class="texto-fraco">Ninguém está a jogar no servidor agora.</p>
+	<?php else: ?>
+	<div class="tabela-rola">
+	<table>
+		<thead>
+			<tr><th>Jogador</th><th>Jogo</th><th>Estado</th><th>Servidor</th><th>Desde</th><th></th></tr>
+		</thead>
+		<tbody>
+			<?php foreach ($this->ver->sessoes as $s): ?>
+			<tr>
+				<td><?=esc($s['nome_us'] ?? '?')?></td>
+				<td><?=esc($s['titulo_jg'] ?? '?')?></td>
+				<td><?=esc($nomesEstado[$s['estado_ss']] ?? $s['estado_ss'])?></td>
+				<td><?=$s['nome_no'] !== null ? esc($s['nome_no']).' &middot; lugar '.(int)$s['slot_ss'] : '<span class="texto-fraco">—</span>'?></td>
+				<td><?=esc(data_pt($s['dtc_ss'], true))?></td>
+				<td class="acoes">
+					<form method="post" action="<?=url_base('servidores/terminar/'.(int)$s['id_ss'])?>"
+					      onsubmit="return confirm('Terminar esta sessão? O jogador perde o que não tiver gravado.')">
+						<?=csrf_field()?>
+						<button type="submit" class="btn btn-perigo">Terminar</button>
+					</form>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	</div>
+	<?php endif; ?>
+</div>

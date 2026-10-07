@@ -129,12 +129,16 @@ aguenta muitos jogadores.
 | `/jogar/local` | jogar um ficheiro do próprio computador (não é enviado ao servidor) |
 | `/admin` | gerir jogos: só para administradores (`nivl_us = 1`) |
 | `/admin/emulador` | de onde vem o EmulatorJS, e as BIOS |
+| `/servidores` | os servidores de jogo da PS2 e quem está a jogar: só para administradores |
 
-**Consolas:** NES, SNES, N64, Game Boy/Color, GBA, DS, Master System,
-Game Gear, Mega Drive, Sega CD, 32X, Saturn, PS1 e PSP. A lista, com os
-formatos aceites, está em `lib/jogos/Consolas.php`. PS2 e PS3 não têm
-emulador que corra no browser: ficam para a Fase 2 (servidor com GPU e
-streaming).
+**Consolas:**
+
+- no browser: NES, SNES, N64, Game Boy/Color, GBA, DS, Master System, Game
+  Gear, Mega Drive, Sega CD, 32X, Saturn, PS1 e PSP;
+- **no servidor:** PS2 (ver abaixo).
+
+A lista, com os formatos aceites, está em `lib/jogos/Consolas.php`. A PS3
+ainda não entra: precisaria de uma máquina inteira por jogador.
 
 ### Adicionar jogos
 
@@ -175,13 +179,38 @@ Por omissão o browser carrega o EmulatorJS da CDN oficial
   `JogarControlo::isolar()` manda os cabeçalhos, e o HTTPS fica do lado do
   alojamento. Sem HTTPS, as outras consolas funcionam na mesma. No Safari
   o PSP não arranca.
-- **`armazem/` fechado ao exterior.** No Apache trata disso o
-  `armazem/.htaccess`. No **nginx**, que não lê `.htaccess`, é preciso um
-  `location /armazem/ { deny all; }`, ou então apontar o `PASTA_ARMAZEM`
+- **`armazem/` e `no-de-jogo/` fechados ao exterior.** No Apache tratam
+  disso os `.htaccess` de cada pasta. No **nginx**, que não lê `.htaccess`, é preciso um
+  `location ~ ^/(armazem|no-de-jogo)/ { deny all; }`, ou então apontar o `PASTA_ARMAZEM`
   (`lib/define.php`) para uma pasta fora do site.
 - **Tempo para descargas por link.** A descarga corre durante o pedido. Um
   jogo grande num alojamento com `max_execution_time` curto (ou um proxy
   com tempo limite) pode ser cortado a meio. Aí, o melhor é enviar o ficheiro.
+
+### PS2: jogos que correm no servidor
+
+Não há emulador de PS2 que corra num browser, por isso a PS2 corre num
+**nó de jogo**: uma máquina com placa gráfica NVIDIA, onde cada jogador
+tem o seu PCSX2 num contentor. A imagem chega ao browser por streaming
+(WebRTC, com o Selkies). O computador do jogador só recebe vídeo; o que
+conta é a ligação à internet.
+
+- **Cada jogador ocupa um lugar** do nó enquanto joga. Quando os lugares
+  estão todos ocupados, quem chega fica numa **fila** e entra por ordem de
+  chegada (`lib/jogos/Fila.php`). Não precisa de tarefa agendada: a fila
+  anda com as perguntas das páginas de quem espera.
+- **Um lugar abandonado** (separador fechado) liberta-se ao fim de 2
+  minutos sem sinal.
+- **O nó copia o jogo do site** na primeira vez, por um endereço assinado
+  (`NoControlo`), e guarda-o em cache.
+- **Os cartões de memória** ficam guardados por jogador, no nó.
+- **A BIOS da PS2 é obrigatória** (*Gerir jogos → Emulador e BIOS*). Vai
+  aos pedaços como os jogos, porque tem 4 MB e muitos servidores só aceitam
+  2 MB por envio.
+
+A instalação do nó (a máquina, o Docker, o nginx, o TURN e como medir
+quantos jogadores aguenta) está em **`no-de-jogo/LEIA-ME.md`**. Depois de
+instalado, o nó acrescenta-se em `/servidores`.
 
 ### Gravações
 

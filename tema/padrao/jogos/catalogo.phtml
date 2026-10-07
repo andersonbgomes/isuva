@@ -47,6 +47,7 @@ $consolaActual = $this->ver->consola;
 		<div class="jogo-info">
 			<strong><?=esc($j['titulo_jg'])?></strong>
 			<small><?=esc(Consolas::nome($j['consola_jg']))?></small>
+			<?php if(Consolas::noServidor($j['consola_jg'])): ?><span class="etiqueta">No servidor</span><?php endif; ?>
 		</div>
 	</a>
 	<?php endforeach; ?>

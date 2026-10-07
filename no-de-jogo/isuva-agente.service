@@ -1,0 +1,26 @@
+# O agente como serviço do sistema: arranca com a máquina e volta a
+# arrancar se cair.
+#
+#   sudo cp isuva-agente.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now isuva-agente
+#   journalctl -u isuva-agente -f        (o registo)
+#
+# Corre como o utilizador "isuva", que tem de estar no grupo "docker" --
+# nunca como root: o agente fala com a internet (através do nginx).
+
+[Unit]
+Description=isuva - agente do no de jogo
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+User=isuva
+Group=isuva
+WorkingDirectory=/opt/isuva/no-de-jogo
+ExecStart=/usr/bin/python3 /opt/isuva/no-de-jogo/agente.py /etc/isuva/config.json
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -133,7 +133,9 @@ class Armazem {
 			&& !empty($_SESSION['envios'][$id]);
 	}
 
-	public static function envioNovo($nomeOriginal, $tamanho) {
+	//$tipo: 'jogo' ou 'bios' -- para um envio aberto para uma coisa não
+	//poder ser fechado como a outra
+	public static function envioNovo($nomeOriginal, $tamanho, $tipo = 'jogo') {
 		$id = bin2hex(random_bytes(16));
 
 		/*
@@ -144,6 +146,7 @@ class Armazem {
 		$_SESSION['envios'][$id] = [
 			'nome'    => self::nomeLimpo($nomeOriginal),
 			'tamanho' => (int)$tamanho,
+			'tipo'    => $tipo,
 			'inicio'  => time(),
 		];
 

@@ -26,3 +26,7 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# A configuração de um nó de jogo tem o segredo: fica na máquina do nó.
+/no-de-jogo/config.json
+__pycache__/

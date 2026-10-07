@@ -1,0 +1,12 @@
+<?php
+/*
+O indicador do comando, no topo do ecrã de jogo. Quem lhe dá vida é o
+comandos.js: diz se há comando, qual, e a que jogador ficou -- ou o que
+falta para o browser o mostrar (premir um botão, HTTPS). Clicar abre a
+página de teste, para ver botão a botão se o comando responde.
+*/
+?>
+<a class="comando-estado comando-espera" id="comando-estado" href="<?=url_base('comandos')?>" target="_blank" rel="noopener">
+	<?=icone('comando')?><span>Comando: prima um botão</span>
+</a>
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/comandos.js')?>"></script>

@@ -42,8 +42,13 @@ class Guias {
 			'grupo' => 'Começar', 'titulo' => 'Primeiros passos', 'icone' => 'comando', 'tom' => '#14b8a6',
 			'resumo' => 'Entrar, escolher um jogo, jogar e usar os controlos.',
 			'blocos' => [
-				['h', 'Entrar'],
-				['p', 'As contas são criadas pelo administrador do site. Entre com o e-mail e a palavra-passe que ele lhe deu. Se não tem conta, peça-lhe uma.'],
+				['h', 'Conta: só para guardar'],
+				['p', 'Pode jogar **já, sem conta**: abra o catálogo e escolha um jogo. A conta serve para **guardar o progresso** e continuar em qualquer computador.'],
+				['passos', [
+					'Carregue em **Criar conta** (no topo da página), escreva o nome, o e-mail e uma palavra-passe, e entra logo.',
+					'Ou carregue em **Continuar com o Google**, e entra com a sua conta Google, sem palavra-passe nova.',
+				]],
+				['nota', 'Jogou sem conta e só depois a criou? Não perde nada: na próxima vez que abrir o jogo, a gravação que ficou no browser passa para a sua conta.'],
 				['h', 'Escolher e abrir um jogo'],
 				['passos', [
 					'Em **Jogos** (o ícone da casa) estão todos os jogos, arrumados por família: Nintendo, Sega e PlayStation. A barra de pesquisa, no topo, procura pelo nome.',
@@ -52,7 +57,7 @@ class Guias {
 					'Nos jogos que correm no seu browser, carregue no botão de arranque (▶) que aparece no meio do ecrã. A primeira vez demora mais: o browser descarrega o emulador e o jogo, e da próxima vez já os tem guardados.',
 				]],
 				['h', 'Controlos'],
-				['p', 'Pode jogar com o teclado ou com um comando ligado ao computador (USB ou Bluetooth): o comando funciona sem configurar nada. Estas são as teclas de origem:'],
+				['p', 'Pode jogar com o teclado ou com um comando ligado ao computador (USB ou Bluetooth): prima um botão do comando depois de abrir o jogo, e veja o guia **Comandos** se não responder. Estas são as teclas de origem:'],
 				['teclas', 'browser'],
 				['nota', 'Para mudar as teclas, use o ícone do comando na barra do emulador, dentro do jogo. No telemóvel aparece um comando no ecrã.'],
 				['h', 'Ecrã inteiro e sair'],
@@ -64,7 +69,8 @@ class Guias {
 			'grupo' => 'Começar', 'titulo' => 'Gravações', 'icone' => 'gravar', 'tom' => '#6366f1',
 			'resumo' => 'Onde fica o seu progresso e como continuar noutro computador.',
 			'blocos' => [
-				['p', 'O seu progresso fica guardado **na sua conta, no servidor**. Pode começar num computador e continuar noutro, ou no telemóvel.'],
+				['p', 'Com conta, o seu progresso fica guardado **na sua conta, no servidor**. Pode começar num computador e continuar noutro, ou no telemóvel.'],
+				['alerta', '**Sem conta**, o jogo grava na mesma, mas **só neste browser**. Quando gravar, aparece um aviso para criar conta. Criar a conta é grátis, e o que já gravou passa para ela.'],
 				['h', 'Dois tipos de gravação'],
 				['passos', [
 					'**A gravação do jogo:** é o que o próprio jogo grava, no "cartão de memória" ou na pilha do cartucho, quando usa a opção de gravar dentro do jogo. Vai para o servidor sozinha, de minuto a minuto e quando sai.',
@@ -74,6 +80,36 @@ class Guias {
 				['h', 'Ver e apagar'],
 				['p', 'Em **As minhas gravações** (o ícone da disquete) vê tudo o que tem guardado, de que jogo e de quando. Pode descarregar uma cópia ou apagar. Cada conta tem 1 GB.'],
 				['alerta', 'Os jogos abertos em "Jogar do meu computador" não fazem parte do catálogo: as gravações deles ficam só no browser onde jogou.'],
+			],
+		],
+
+		'comandos' => [
+			'grupo' => 'Começar', 'titulo' => 'Comandos (PS4, PS5, Xbox, Bluetooth)', 'icone' => 'comando', 'tom' => '#0ea5e9',
+			'resumo' => 'Ligar um comando por USB ou Bluetooth, e o que fazer se não responder.',
+			'blocos' => [
+				['p', 'Qualquer comando que o computador reconheça funciona: o da **PS4** (DualShock 4), o da **PS5** (DualSense), o da **Xbox**, o **Switch Pro** e comandos genéricos, **por cabo USB ou por Bluetooth**. Não precisa de instalar nada.'],
+				['alerta', '**Depois de ligar o comando, prima um botão** com a página do site aberta. O browser só mostra o comando ao site depois disso. É a razão mais comum de "o comando não funciona".'],
+				['h', 'Comando da PS4 ou PS5 por Bluetooth'],
+				['passos', [
+					'Com o comando desligado, mantenha premidos **Share + PS** (na PS5: **Create + PS**) até a luz começar a piscar depressa.',
+					'No computador, abra as definições de **Bluetooth** e escolha **Wireless Controller** (ou DualSense).',
+					'Abra a página **Testar o comando** (o ícone do comando, na barra) e prima um botão: o comando aparece e cada botão acende no desenho.',
+				]],
+				['h', 'Por cabo USB'],
+				['p', 'Ligue o cabo e prima um botão. Use um cabo de dados: alguns cabos só carregam a bateria.'],
+				['h', 'Comando da Xbox'],
+				['p', 'Por Bluetooth: mantenha premido o botão de emparelhar (em cima, ao lado do cabo) até o logótipo piscar, e escolha-o no Bluetooth do computador. Por cabo, basta ligar.'],
+				['h', 'No telemóvel'],
+				['p', 'Em **Android** e no **iPhone/iPad**, emparelhe o comando nas definições de Bluetooth do telemóvel, da mesma maneira. Sem comando, o emulador mostra botões no ecrã.'],
+				['h', 'Se continuar a não funcionar'],
+				['passos', [
+					'Veja o indicador do comando, no topo do ecrã de jogo. Diz se o comando foi reconhecido, e com que jogador ficou.',
+					'Se disser **"Comandos precisam de HTTPS"**, o site está a abrir em `http://`. Os browsers só dão comandos a sites em HTTPS: fale com o administrador.',
+					'Se os botões estiverem **trocados**, abra o **ícone do comando** na barra do emulador, escolha o botão e prima-o no comando.',
+					'Use o **Chrome** ou o **Edge**: são os que melhor reconhecem comandos (e os únicos que os fazem vibrar).',
+					'Feche programas que "apanham" o comando para si, como o **DS4Windows** ou o modo de comando do **Steam**: podem esconder o comando ou mostrá-lo a dobrar.',
+				]],
+				['nota', 'Na **PS2**, que corre no servidor, o comando funciona da mesma maneira: prima um botão depois de a imagem aparecer, com o rato dentro da imagem.'],
 			],
 		],
 
@@ -203,7 +239,7 @@ class Guias {
 				['alerta', 'Numa instalação que já existia, as tabelas novas entram pelos ficheiros da pasta `migrations/`, pela ordem das datas.'],
 				['h', 'Pôr a funcionar'],
 				['passos', [
-					'Crie as contas dos jogadores em **Contas**. Veja o guia "Contas de jogadores".',
+					'Os jogadores criam as suas contas sozinhos. Se quiser o botão "Continuar com o Google", configure-o em **Contas → Entrar com o Google** (veja o guia "Contas de jogadores").',
 					'Envie as BIOS em **Gerir jogos → Emulador e BIOS** (obrigatórias para o Sega CD e a PS2).',
 					'Adicione os primeiros jogos em **Gerir jogos → Adicionar jogo**.',
 					'Para a PS2, ligue um servidor de jogo. Veja o guia "Servidores de PS2".',
@@ -220,8 +256,17 @@ class Guias {
 
 		'contas' => [
 			'grupo' => 'Administração', 'admin' => true, 'titulo' => 'Contas de jogadores', 'icone' => 'pessoas', 'tom' => '#0ea5e9',
-			'resumo' => 'Criar contas, activar e desactivar, e dar a alguém o acesso de administrador.',
+			'resumo' => 'Contas criadas pelos jogadores, entrar com o Google, desactivar e dar acesso de administrador.',
 			'blocos' => [
+				['p', 'O site é **aberto**: qualquer pessoa joga sem conta, e cria a sua quando quiser guardar o progresso. Não precisa de criar contas para ninguém.'],
+				['h', 'Entrar com o Google'],
+				['passos', [
+					'Abra **Contas → Entrar com o Google**.',
+					'Siga os passos que lá estão para criar as credenciais na consola do Google (console.cloud.google.com), e cole o **URI de redireccionamento** que o ecrã mostra.',
+					'Copie o **ID de cliente** e o **segredo** para o ecrã e grave. O botão "Continuar com o Google" aparece logo na entrada e na criação de conta.',
+				]],
+				['alerta', 'Quando uma conta criada com palavra-passe entra pela primeira vez com o Google, fica ligada a ele e a palavra-passe antiga deixa de valer. É uma protecção: as contas do site não confirmam o e-mail, e assim ninguém fica com uma conta criada com o e-mail de outra pessoa.'],
+				['h', 'Criar uma conta à mão'],
 				['passos', [
 					'Abra **Contas** (o ícone das pessoas, na parte de administração da barra).',
 					'Carregue em **Nova conta**, escreva o nome, o e-mail e uma palavra-passe de pelo menos 8 caracteres, e grave.',
@@ -230,6 +275,8 @@ class Guias {
 				['h', 'Activar e desactivar'],
 				['p', 'Uma conta **desactivada** deixa de conseguir entrar, e quem estiver dentro sai na página seguinte. As gravações dessa conta ficam guardadas: ao activá-la outra vez, está tudo lá.'],
 				['h', 'Administradores'],
+				['h', 'O que pede conta'],
+				['p', 'Sem conta joga-se tudo o que corre no browser. Pedem conta: **gravar no servidor**, a **PS2** (cada jogador ocupa uma placa gráfica) e o **Sega CD** (precisa da BIOS, e a BIOS só vai para quem tem conta).'],
 				['p', 'Um administrador vê **Gerir jogos**, **Servidores de jogo** e **Contas**. Dê este acesso só a quem precisa. O site não deixa que tire o acesso a si próprio, para nunca ficar sem nenhum administrador.'],
 			],
 		],

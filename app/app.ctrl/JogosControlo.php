@@ -111,6 +111,8 @@ class JogosControlo extends Acao {
 		$this->ver->bios      = Bios::de($jogo['consola_jg']);
 		$this->ver->gravacoes = $this->gravacoesDoJogo($jogo);
 		$this->ver->mais      = array_slice($m->fetchall ?: [], 0, 4);
+		$this->ver->conta     = $this->tem_conta();
+		$this->ver->google    = Conta::googleLigado();
 		$this->ver->semTitulo = true;
 		$this->renderizar('ver');
 	}
@@ -127,6 +129,7 @@ class JogosControlo extends Acao {
 	*/
 	private function continuarAJogar($todos) {
 		$eu = utilizador_actual();
+		if(!$eu){ return []; }   //um visitante não jogou nada que o site saiba
 		$quando = [];
 
 		$stt = Con::ecta()->prepare(
@@ -159,6 +162,8 @@ class JogosControlo extends Acao {
 	}
 
 	private function gravacoesDoJogo($jogo) {
+		if(!$this->tem_conta()){ return null; }   //a vista mostra o convite para criar conta
+
 		if(Consolas::noServidor($jogo['consola_jg'])){
 			$k = Gravacoes::chave('cartao', [], $jogo['consola_jg'], 0);
 			$cartao = is_array($k) ? Gravacoes::pegar(utilizador_actual(), $k) : [];

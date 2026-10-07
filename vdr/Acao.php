@@ -40,10 +40,20 @@ abstract class Acao {
 	*/
 	//NoControlo: quem pede é o agente de um nó de jogo, protegido por
 	//endereços assinados (ver o comentário no topo dele)
-	const SEM_SESSAO = ['AuthControlo', 'NoControlo'];
+	//
+	//O SITE É PÚBLICO: o catálogo, a tela dos jogos, jogar (as consolas de
+	//browser), o "Como usar" e a BIOS abrem sem conta. O que precisa de
+	//conta -- gravar, a PS2, as BIOS, o painel -- pede-a DENTRO do
+	//controlador, acção a acção, com so_conta() ou so_admin().
+	const SEM_SESSAO = ['AuthControlo', 'NoControlo', 'RegistoControlo', 'IndexControlo',
+	                    'JogosControlo', 'JogarControlo', 'ComousarControlo', 'BiosControlo',
+	                    'ComandosControlo'];
 
 	public function __construct() {
 		$this->ver = new stdClass();
+		//um visitante sem conta tem [] aqui, e não "nada": as vistas
+		//perguntam $this->ver->usuario['...'] ?? sem ter de verificar antes
+		$this->ver->usuario = [];
 
 		if(!in_array(get_class($this), self::SEM_SESSAO, true)){
 			nlog();
@@ -100,6 +110,36 @@ abstract class Acao {
 
 	protected function e_admin() {
 		return (int)($this->ver->usuario['nivl_us'] ?? 0) === 1;
+	}
+
+	protected function tem_conta() {
+		return !empty($this->ver->usuario);
+	}
+
+	/*
+	Só com conta passa daqui -- para as acções de um controlador público
+	que precisam de saber QUEM é (gravar, a PS2, as BIOS).
+
+	Quem não tem conta vai para a entrada e, depois de entrar ou de criar a
+	conta, volta para onde estava (o "volta"): quem estava a meio de abrir
+	um jogo não tem de o procurar outra vez.
+
+	Num pedido JavaScript (JSON) não se redirecciona -- responde-se 401 com
+	a mensagem, e é a página que mostra o convite para criar conta.
+	*/
+	protected function so_conta($json = false, $volta = null) {
+		if($this->tem_conta()){ return; }
+
+		if($json){
+			http_response_code(401);
+			header('Content-Type: application/json; charset=utf-8');
+			echo json_encode(['erro' => 'Precisa de uma conta. Crie uma (é grátis) ou entre.', 'conta' => false]);
+			exit;
+		}
+
+		$this->aviso('info', 'Precisa de uma conta', 'Entre ou crie uma conta (é grátis) para continuar.');
+		header('Location:'.url_base('auth').'?volta='.urlencode($volta ?? volta_actual()));
+		exit;
 	}
 
 

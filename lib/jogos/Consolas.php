@@ -166,6 +166,25 @@ class Consolas {
 		return $grupos;
 	}
 
+	/*
+	Esta consola só se joga com conta? Duas razões, e só estas:
+
+	    servidor            cada jogador ocupa uma placa gráfica (cara e
+	                        contada): sem conta, qualquer pessoa -- ou um
+	                        robô -- enchia os lugares todos;
+	    BIOS obrigatória    a BIOS só vai para quem tem conta (num site
+	                        aberto, o ficheiro que o browser recebe ficava ao
+	                        alcance de qualquer visitante), e sem ela esta
+	                        consola não arranca.
+
+	As outras jogam-se sem conta: as que usam BIOS opcional arrancam com a
+	de substituição que o emulador já traz.
+	*/
+	public static function precisaConta($chave) {
+		$c = self::pegar($chave);
+		return $c !== null && ($c['modo'] === 'servidor' || $c['bios'] === 'obrigatoria');
+	}
+
 	public static function noServidor($chave) {
 		return (self::LISTA[$chave]['modo'] ?? '') === 'servidor';
 	}

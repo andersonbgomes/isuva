@@ -25,6 +25,10 @@ function titulo(){
 			$titulo = 'Entrar';
 			break;
 
+		case 'registo':
+			$titulo = 'Criar conta';
+			break;
+
 		case 'jogos':
 			$titulo = 'Jogos';
 			if(acao === 'ver'){
@@ -51,10 +55,15 @@ function titulo(){
 			$titulo = 'BIOS';
 			break;
 
+		case 'comandos':
+			$titulo = 'Testar o comando';
+			break;
+
 		case 'utilizadores':
 			switch (acao) {
 				case 'novo':   $titulo = 'Nova conta';   break;
 				case 'editar': $titulo = 'Editar conta'; break;
+				case 'google': $titulo = 'Entrar com o Google'; break;
 				default:       $titulo = 'Contas';       break;
 			}
 			break;

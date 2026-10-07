@@ -1,0 +1,43 @@
+<?php
+/*
+As credenciais do "Entrar com o Google". O segredo nunca é mostrado (ver
+UtilizadoresControlo::google).
+*/
+$ligado = $this->ver->googleId !== '' && $this->ver->temSegredo;
+?>
+<div class="duas-colunas">
+	<form class="cartao" method="post" action="<?=url_base('utilizadores/guardargoogle')?>">
+		<?=csrf_field()?>
+		<h3>Credenciais</h3>
+		<p class="<?=$ligado ? 'estado-ok' : 'texto-fraco'?>"><?=$ligado ? 'Ligado: o botão aparece na entrada e na criação de conta.' : 'Desligado: o botão não aparece.'?></p>
+
+		<label for="google_id">ID de cliente</label>
+		<input type="text" id="google_id" name="google_id" maxlength="200" value="<?=esc($this->ver->googleId)?>" placeholder="1234567890-xxxx.apps.googleusercontent.com" spellcheck="false">
+
+		<label for="google_segredo">Segredo do cliente</label>
+		<input type="password" id="google_segredo" name="google_segredo" maxlength="100" autocomplete="off"
+		       placeholder="<?=$this->ver->temSegredo ? 'Já guardado (deixe vazio para manter)' : 'GOCSPX-...'?>">
+
+		<label for="volta-google">URI de redireccionamento autorizado</label>
+		<input type="text" id="volta-google" readonly value="<?=esc($this->ver->googleVolta)?>" onclick="this.select()">
+		<p class="ajuda">Cole este endereço, tal e qual, na consola do Google.</p>
+
+		<button type="submit" class="btn btn-largo">Gravar</button>
+		<?php if($ligado): ?>
+		<button type="submit" name="desligar" value="1" class="btn btn-claro btn-largo" style="margin-top:8px"
+		        onclick="return confirm('Desligar a entrada com o Google? Quem só entra pelo Google deixa de conseguir entrar.')">Desligar</button>
+		<?php endif; ?>
+	</form>
+
+	<div class="cartao">
+		<h3>Como obter as credenciais</h3>
+		<ol class="passos">
+			<li>Abra <strong>console.cloud.google.com</strong> e crie um projecto (ou escolha um).</li>
+			<li>Em <strong>APIs e serviços → Ecrã de consentimento OAuth</strong>, configure-o como <strong>Externo</strong>, com o nome do site e o seu e-mail.</li>
+			<li>Em <strong>APIs e serviços → Credenciais → Criar credenciais → ID de cliente OAuth</strong>, escolha <strong>Aplicação Web</strong>.</li>
+			<li>Em <strong>URIs de redireccionamento autorizados</strong>, cole o endereço deste ecrã (ao lado).</li>
+			<li>Copie o <strong>ID de cliente</strong> e o <strong>segredo</strong> para aqui e grave.</li>
+		</ol>
+		<div class="nota"><?=icone('info')?><div>O site tem de estar em <strong>HTTPS</strong>: o Google não aceita endereços http (a não ser localhost, para testes).</div></div>
+	</div>
+</div>

@@ -99,6 +99,7 @@ chama-se como a classe" é mais fácil de seguir do que qualquer mapa.
     vdr/           o núcleo (App, Acao, DB_GLOBAL)
     lib/<pasta>/   bibliotecas próprias; acrescentar aqui ao criar uma
     lib/jogos/     as consolas, o armazém dos ficheiros e as descargas por link
+    lib/contas/    as contas: abrir a sessão, criar, entrar com o Google
 
 Ao acrescentar uma pasta de biblioteca (lib/pdf/, lib/email/, ...),
 acrescenta-se aqui uma linha igual às outras.
@@ -110,6 +111,7 @@ spl_autoload_register(function ($classe) {
         "app/app.mdl/{$classe}.php",
         "vdr/{$classe}.php",
         "lib/jogos/{$classe}.php",
+        "lib/contas/{$classe}.php",
     ] as $ficheiro) {
         $caminho = _C_ . _P_ . str_replace('/', _P_, $ficheiro);
         if(file_exists($caminho)){

@@ -38,8 +38,14 @@ class AuthControlo extends Acao {
 		//já entrou: não fica aqui a olhar para um formulário que não serve
 		loga();
 
+		//para onde voltar depois de entrar (o jogo que se estava a abrir)
+		if(isset($_GET['volta'])){
+			$_SESSION['volta'] = volta_segura($_GET['volta']);
+		}
+
 		$this->ver->bloqueado = $this->bloqueado();
 		$this->ver->minutos   = self::MINUTOS_CASTIGO;
+		$this->ver->google    = Conta::googleLigado();
 
 		$this->renderizar_solto('entrar');
 	}
@@ -95,15 +101,51 @@ class AuthControlo extends Acao {
 			$novo->actualizar();
 		}
 
-		session_regenerate_id(true);
-		unset($_SESSION['tentativas']);
+		Conta::abrirSessao($conta);
+	}
 
-		$_SESSION['us_id']  = $conta['id_us'];
-		$_SESSION['us_em']  = $conta['email_us'];
-		$_SESSION['us_nvl'] = $conta['nivl_us'];
 
-		header('Location:'.url_base(''));
+	//=============================================================
+	// Entrar com o Google (ver lib/contas/Conta.php)
+	//=============================================================
+
+	public function google() {
+		loga();
+		if(!Conta::googleLigado()){
+			$this->voltar('warning', 'Google', 'A entrada com o Google ainda não está configurada.', 'auth');
+		}
+		if(isset($_GET['volta'])){
+			$_SESSION['volta'] = volta_segura($_GET['volta']);
+		}
+		header('Location:'.Conta::urlGoogle());
 		exit;
+	}
+
+	public function googlevolta() {
+		loga();
+
+		//quem desistiu no ecrã do Google volta com ?error=access_denied
+		if(isset($_GET['error'])){
+			$this->voltar('info', 'Google', 'A entrada com o Google foi cancelada.', 'auth');
+		}
+		if(!Conta::stateValido($_GET['state'] ?? null) || empty($_GET['code'])){
+			$this->voltar('danger', 'Google', 'O pedido expirou. Carregue outra vez em "Continuar com o Google".', 'auth');
+		}
+
+		$c = Conta::trocarCodigo((string)$_GET['code']);
+		if(is_string($c)){
+			$this->voltar('danger', 'Google', $c, 'auth');
+		}
+
+		$conta = Conta::daGoogle($c);
+		if(is_string($conta)){
+			$this->voltar('danger', 'Google', $conta, 'auth');
+		}
+		if((int)$conta['stto_us'] !== 1){
+			$this->voltar('danger', 'Conta desactivada', 'Esta conta foi desactivada pelo administrador.', 'auth');
+		}
+
+		Conta::abrirSessao($conta);
 	}
 
 

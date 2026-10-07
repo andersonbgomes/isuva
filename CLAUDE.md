@@ -21,9 +21,16 @@ O domínio dos jogos vive em `lib/jogos/`:
   de formatos e de BIOS saem do `Consolas.php`, e as teclas de
   `Guias::teclas()`. Mudar as teclas no EmulatorJS ou no PCSX2 obriga a
   mudar essa lista também;
+- `Bios.php` aceita a BIOS num `.zip` (`deZip`): na PS2 extrai o `.bin`
+  principal (o PCSX2 não lê .zip); nas consolas de browser deixa o .zip
+  inteiro (o EmulatorJS abre-o, e a DS precisa de vários ficheiros);
 - `Gravacoes.php`: as gravações de cada conta (sram, estados, cartão da
   PS2). Do lado do browser, `tema/padrao/ext/assets/js/gravacoes.js`.
   Do lado do nó, `trazer_cartao`/`devolver_cartao` no `agente.py`.
+
+As contas vivem em `lib/contas/Conta.php`: abrir a sessão (igual para a
+palavra-passe, a conta nova e o Google), criar conta, e o "Entrar com o
+Google" (OpenID Connect, sem biblioteca).
 
 `no-de-jogo/` é o programa da máquina com GPU (Python, Docker, nginx).
 Não corre no site, e o site não o serve. A assinatura HMAC dos pedidos
@@ -52,8 +59,20 @@ tem de ser igual nos dois lados (`Agente::assinar()` e `assinar()` no
 - `no-de-jogo/` — o agente do nó de jogo e a imagem Docker da PS2. Tem o
   seu `LEIA-ME.md`; validar com `python3 -m py_compile` antes de commitar.
 
-O construtor de `Acao` exige sessão iniciada em todos os controladores
-excepto os da lista `Acao::SEM_SESSAO`.
+O SITE É PÚBLICO. Os controladores em `Acao::SEM_SESSAO` abrem sem conta
+(o catálogo, jogar, os guias, a BIOS, a entrada, a conta nova). Dentro
+deles, o que precisa de conta pede-a acção a acção com `so_conta()` (ou
+`so_conta(true)` num pedido JSON, que responde 401). Os outros
+controladores exigem sessão no construtor de `Acao`, como antes.
+
+Pedem conta, e não se abre isto sem pensar: gravar, a PS2
+(`Consolas::precisaConta`: cada jogador ocupa uma placa gráfica), as BIOS
+(`JogarControlo::bios`: num site aberto ficavam a descarregar a qualquer
+visitante) e o painel. As ISOs dos jogos de servidor nunca saem por
+`jogar/ficheiro`: só o nó as descarrega, pelo `NoControlo`.
+
+Um "volta" (`?volta=`) passa SEMPRE por `volta_segura()` antes de
+redireccionar: senão é um redireccionamento aberto para fora do site.
 
 ## Como se cria um módulo
 
@@ -67,12 +86,20 @@ excepto os da lista `Acao::SEM_SESSAO`.
 5. Um `case` em `lib/ajuda/head.php` (título) e uma linha em
    `tema/<tema>/extras/leftsidebar.phtml` (menu).
 
+## Comandos
+
+`tema/padrao/ext/assets/js/comandos.js`: o nome legível de cada comando,
+o indicador do ecrã de jogo, e a atribuição dos comandos sem jogador no
+EmulatorJS. A página `/comandos` testa um comando botão a botão.
+
 ## BIOS: nunca para descarregar
 
 As BIOS têm direitos de autor. O site entrega-as **ao emulador**
 (`JogarControlo::bios`, `NoControlo::bios`), e a página `/bios` só diz o
 estado de cada consola. Não se acrescenta um botão de descarregar BIOS,
-nem uma lista de links para sites que as oferecem.
+nem uma lista de links para sites que as oferecem, e **nenhuma BIOS entra
+no repositório nem vem "de origem" com o sistema**: cada administrador
+envia a sua, no painel. A da PS2 nunca sai do servidor e do nó.
 
 ## Segurança — aplicar sempre
 

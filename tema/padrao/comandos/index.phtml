@@ -1,0 +1,159 @@
+<?php
+/*
+O TESTE DE COMANDOS. Desenha um comando (com a disposição "standard" da
+Gamepad API, que é a do comando da PlayStation/Xbox) e acende cada botão
+que o browser diz estar premido. Os analógicos mexem, os gatilhos enchem.
+
+Os índices dos botões (data-b) são os da disposição standard:
+    0 ✕  1 ○  2 □  3 △  4 L1  5 R1  6 L2  7 R2  8 Share/Select
+    9 Options/Start  10 L3  11 R3  12-15 setas  16 PS/Home  17 touchpad
+*/
+?>
+<div class="cartao" id="sem-comando">
+	<div class="pad-vazio">
+		<?=icone('comando')?>
+		<h2>Ligue o comando e prima um botão</h2>
+		<p class="texto-fraco" style="max-width:520px;margin:8px auto 0">
+			Por USB ou por Bluetooth. Depois de ligado, <strong>prima um botão qualquer</strong>: o browser só mostra
+			o comando ao site depois disso. Funciona com o comando da PS4, da PS5, da Xbox, da Switch e com comandos genéricos.
+		</p>
+		<div class="nota nota-alerta" id="sem-https" hidden style="text-align:left;max-width:560px;margin:20px auto 0">
+			<?=icone('alerta')?><div>Este site está a abrir sem <strong>HTTPS</strong>, e os browsers só dão comandos a sites em HTTPS.
+			O comando não vai aparecer aqui nem nos jogos até o site passar a https://.</div>
+		</div>
+		<p style="margin-top:20px"><a href="<?=url_base('como-usar/guia/comandos')?>">Como ligar o comando (PS4, Xbox, Bluetooth)</a></p>
+	</div>
+</div>
+
+<div id="com-comando" hidden>
+	<div class="pad-escolha" id="escolha"></div>
+	<div class="pad">
+		<div class="cartao">
+			<div class="pad-desenho" id="desenho">
+				<span class="pb ret" data-b="6" style="left:14%;top:8%">L2<i class="gatilho"></i></span>
+				<span class="pb ret" data-b="4" style="left:31%;top:8%">L1</span>
+				<span class="pb ret" data-b="5" style="left:69%;top:8%">R1</span>
+				<span class="pb ret" data-b="7" style="left:86%;top:8%">R2<i class="gatilho"></i></span>
+
+				<span class="pb ret" data-b="17" style="left:50%;top:22%;width:22%">touchpad</span>
+				<span class="pb ret" data-b="8" style="left:34%;top:30%;width:10%">Share</span>
+				<span class="pb ret" data-b="9" style="left:66%;top:30%;width:10%">Options</span>
+				<span class="pb" data-b="16" style="left:50%;top:50%">PS</span>
+
+				<span class="pb dir" data-b="12" style="left:22%;top:31%">▲</span>
+				<span class="pb dir" data-b="13" style="left:22%;top:53%">▼</span>
+				<span class="pb dir" data-b="14" style="left:15%;top:42%">◀</span>
+				<span class="pb dir" data-b="15" style="left:29%;top:42%">▶</span>
+
+				<span class="pb" data-b="3" style="left:78%;top:30%">△</span>
+				<span class="pb" data-b="1" style="left:86%;top:42%">○</span>
+				<span class="pb" data-b="0" style="left:78%;top:54%">✕</span>
+				<span class="pb" data-b="2" style="left:70%;top:42%">□</span>
+
+				<span class="pstick" data-b="10" data-eixos="0,1" style="left:37%;top:70%"><i></i></span>
+				<span class="pstick" data-b="11" data-eixos="2,3" style="left:63%;top:70%"><i></i></span>
+			</div>
+			<p class="ajuda texto-centro" style="margin-top:16px">Prima os botões e mexa os analógicos: cada um tem de acender no desenho.</p>
+		</div>
+
+		<div class="cartao pad-dados">
+			<h3 id="pad-nome">Comando</h3>
+			<div class="linha-info"><?=icone('info')?><div>Disposição: <strong id="pad-mapa"></strong></div></div>
+			<div class="linha-info"><?=icone('comando')?><div><strong id="pad-botoes"></strong> botões, <strong id="pad-eixos"></strong> eixos</div></div>
+			<div class="linha-info"><?=icone('teclado')?><div>Último botão premido: <strong id="pad-ultimo">nenhum</strong></div></div>
+			<div class="nota nota-alerta" id="pad-nao-standard" hidden><?=icone('alerta')?>
+				<div>Este comando não usa a disposição padrão: o browser pode trocar alguns botões. Nos jogos, acerte-os no
+				<strong>ícone do comando</strong> da barra do emulador (escolha o botão e prima-o no comando).</div>
+			</div>
+			<p style="margin-top:16px"><button type="button" class="btn btn-claro" id="vibrar"><?=icone('relampago')?> Testar a vibração</button></p>
+			<p class="ajuda" id="vibrar-msg"></p>
+			<details class="ajuda"><summary>O que o browser diz deste comando</summary><code id="pad-id" style="display:block;margin-top:6px;white-space:normal"></code></details>
+		</div>
+	</div>
+</div>
+
+<script src="<?=url_versionada('tema/padrao/ext/assets/js/comandos.js')?>"></script>
+<script>
+(function () {
+	var C = window.IsuvaComandos;
+	var el = function (id) { return document.getElementById(id); };
+	var escolhido = null;   //o índice do comando que se está a ver
+	var nomesBotoes = ['✕', '○', '□', '△', 'L1', 'R1', 'L2', 'R2', 'Share', 'Options', 'L3', 'R3', '▲', '▼', '◀', '▶', 'PS', 'touchpad'];
+
+	if (!window.isSecureContext) { el('sem-https').hidden = false; }
+
+	function desenharEscolha(pads) {
+		var caixa = el('escolha');
+		var chave = pads.map(function (p) { return p.index + p.id; }).join('|');
+		if (caixa.dataset.chave === chave) { return; }
+		caixa.dataset.chave = chave;
+		caixa.innerHTML = '';
+		if (pads.length < 2) { return; }
+		pads.forEach(function (p) {
+			var b = document.createElement('button');
+			b.type = 'button';
+			b.className = 'btn ' + (p.index === escolhido ? '' : 'btn-claro');
+			b.textContent = (p.index + 1) + '. ' + C.nome(p);
+			b.addEventListener('click', function () { escolhido = p.index; caixa.dataset.chave = ''; });
+			caixa.appendChild(b);
+		});
+	}
+
+	function ciclo() {
+		var pads = C.lista();
+		el('sem-comando').hidden = pads.length > 0;
+		el('com-comando').hidden = pads.length === 0;
+
+		if (pads.length) {
+			var g = pads.filter(function (p) { return p.index === escolhido; })[0] || pads[0];
+			escolhido = g.index;
+			desenharEscolha(pads);
+
+			el('pad-nome').textContent = C.nome(g);
+			el('pad-mapa').textContent = g.mapping === 'standard' ? 'padrão (standard)' : 'não padrão';
+			el('pad-nao-standard').hidden = g.mapping === 'standard';
+			el('pad-botoes').textContent = g.buttons.length;
+			el('pad-eixos').textContent = g.axes.length;
+			el('pad-id').textContent = g.id;
+
+			document.querySelectorAll('#desenho [data-b]').forEach(function (d) {
+				var b = g.buttons[+d.dataset.b];
+				var premido = !!(b && (b.pressed || b.value > 0.15));
+				d.classList.toggle('on', premido);
+				if (premido) { el('pad-ultimo').textContent = nomesBotoes[+d.dataset.b] || ('botão ' + d.dataset.b); }
+
+				//os gatilhos (L2/R2) são analógicos: a barra enche com a pressão
+				var gat = d.querySelector('.gatilho');
+				if (gat) { gat.style.width = Math.round((b ? b.value : 0) * 100) + '%'; }
+
+				//os analógicos: a bolinha mexe com os dois eixos
+				if (d.dataset.eixos) {
+					var e = d.dataset.eixos.split(',');
+					var x = g.axes[+e[0]] || 0, y = g.axes[+e[1]] || 0;
+					d.querySelector('i').style.transform = 'translate(calc(-50% + ' + (x * 60) + '%), calc(-50% + ' + (y * 60) + '%))';
+					if (Math.abs(x) > 0.2 || Math.abs(y) > 0.2) { d.classList.add('on'); }
+				}
+			});
+		}
+		requestAnimationFrame(ciclo);
+	}
+	requestAnimationFrame(ciclo);
+
+	/*
+	A vibração: só alguns browsers a dão (Chrome e Edge sim; Firefox e
+	Safari, por agora, não). Quando não há, diz-se -- e não é sinal de que
+	o comando tem defeito.
+	*/
+	el('vibrar').addEventListener('click', function () {
+		var g = C.lista().filter(function (p) { return p.index === escolhido; })[0];
+		var msg = el('vibrar-msg');
+		if (g && g.vibrationActuator && g.vibrationActuator.playEffect) {
+			g.vibrationActuator.playEffect('dual-rumble', { duration: 600, strongMagnitude: 1, weakMagnitude: 0.6 })
+				.then(function () { msg.textContent = 'Vibrou? Se sim, está tudo bem.'; })
+				.catch(function () { msg.textContent = 'Este comando não aceitou a vibração.'; });
+		} else {
+			msg.textContent = 'Este browser não faz vibrar comandos (o Chrome e o Edge fazem). Não é defeito do comando.';
+		}
+	});
+})();
+</script>

@@ -7,6 +7,12 @@ AS CONTAS DOS JOGADORES -- só para o administrador.
     /utilizadores/guardar       (POST)
     /utilizadores/editar/3      o formulário de edição
     /utilizadores/actualizar/3  (POST)
+    /utilizadores/google        as credenciais do "Entrar com o Google"
+    /utilizadores/guardargoogle (POST)
+
+As pessoas também criam as suas próprias contas (RegistoControlo) e
+entram com o Google (AuthControlo): esta página é para o resto --
+desactivar, dar acesso de administrador, trocar uma palavra-passe.
 
 Não há "apagar": desactivar (stto_us = 0) fecha a porta e guarda o
 histórico e as gravações. Uma conta desactivada sai na página seguinte
@@ -96,6 +102,63 @@ class UtilizadoresControlo extends Acao {
 			$this->voltar('danger', 'Erro', 'Não foi possível gravar. O motivo ficou no registo de erros.', $volta);
 		}
 		$this->voltar('success', 'Gravado', 'A conta de '.$campos['nome_us'].' foi actualizada.', 'utilizadores');
+	}
+
+
+	//=============================================================
+	// Entrar com o Google
+	//=============================================================
+
+	/*
+	As credenciais do "Entrar com o Google": o ID de cliente e o segredo,
+	tirados da consola do Google Cloud (o guia "Contas de jogadores"
+	explica onde). Ficam na app_config.
+
+	O segredo NUNCA volta ao ecrã: o formulário só diz se já há um, e um
+	campo vazio ao gravar quer dizer "fica o que está". Mostrá-lo era
+	deixá-lo em qualquer ecrã partilhado, captura ou histórico do browser.
+	*/
+	public function google() {
+		$this->so_admin();
+		$this->ver->googleId     = (string)configura('google_id');
+		$this->ver->temSegredo   = trim((string)configura('google_segredo')) !== '';
+		$this->ver->googleVolta  = Conta::googleVolta();
+		$this->renderizar('google');
+	}
+
+	public function guardargoogle() {
+		$this->so_admin();
+		if($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valido()){
+			$this->voltar('danger', 'Erro', 'A sessão expirou. Tente outra vez.', 'utilizadores/google');
+		}
+
+		$id      = trim((string)($_POST['google_id'] ?? ''));
+		$segredo = trim((string)($_POST['google_segredo'] ?? ''));
+		$desligar = !empty($_POST['desligar']);
+
+		if($desligar){
+			$id = '';
+			$segredo = '';
+		} else {
+			if(!preg_match('/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/', $id)){
+				$this->voltar('warning', 'Google', 'O ID de cliente tem a forma 1234567890-abc...apps.googleusercontent.com. Copie-o da consola do Google.', 'utilizadores/google');
+			}
+			if($segredo === ''){
+				$segredo = (string)configura('google_segredo');   //fica o que está
+			}
+			if(!preg_match('/^[A-Za-z0-9_\-]{10,100}$/', $segredo)){
+				$this->voltar('warning', 'Google', 'Falta o segredo do cliente (copie-o da consola do Google).', 'utilizadores/google');
+			}
+		}
+
+		$stt = Con::ecta()->prepare(
+			"INSERT INTO `app_config` (`conf_chave`, `conf_valor`) VALUES (?, ?)
+			 ON DUPLICATE KEY UPDATE `conf_valor` = VALUES(`conf_valor`)"
+		);
+		$stt->execute(['google_id', $id]);
+		$stt->execute(['google_segredo', $segredo]);
+
+		$this->voltar('success', 'Google', $desligar ? 'A entrada com o Google foi desligada.' : 'Gravado. O botão "Continuar com o Google" já aparece na entrada.', 'utilizadores/google');
 	}
 
 

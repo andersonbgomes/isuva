@@ -51,7 +51,10 @@ INSERT INTO `app_config` (`conf_chave`, `conf_valor`) VALUES
   ('tema',      'padrao'),
   ('url',       ''),
   -- de onde o browser carrega o EmulatorJS (Admin > Emulador)
-  ('emu_dados', 'https://cdn.emulatorjs.org/stable/data/')
+  ('emu_dados', 'https://cdn.emulatorjs.org/stable/data/'),
+  -- o "Entrar com o Google" (Contas > Entrar com o Google); vazias, não há botão
+  ('google_id', ''),
+  ('google_segredo', '')
 ON DUPLICATE KEY UPDATE `conf_valor` = `conf_valor`;
 
 
@@ -63,6 +66,10 @@ ON DUPLICATE KEY UPDATE `conf_valor` = `conf_valor`;
 -- as versões e os hashes futuros são mais compridos do que os de hoje —
 -- uma coluna curta corta o hash a meio e ninguém mais entra.
 --
+--   google_us o "sub" da conta Google, quando entra com o Google (ver
+--             lib/contas/Conta.php); NULL nas outras
+--   ip_us     o resumo do IP de onde a conta foi criada (só para limitar
+--             contas por hora, ver RegistoControlo); nunca o IP em claro
 --   nivl_us   1 administrador, 2 utilizador. É o gancho por onde um dia
 --             entram as permissões a sério.
 --   stto_us   1 activo, 0 desligado. Desligar não apaga: o histórico de
@@ -76,8 +83,12 @@ CREATE TABLE IF NOT EXISTS `app_utilizador` (
   `nivl_us`  int NOT NULL DEFAULT 2,
   `stto_us`  int NOT NULL DEFAULT 1,
   `dtc_us`   datetime DEFAULT NULL,
+  `google_us` varchar(64) DEFAULT NULL,
+  `ip_us`     varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id_us`),
-  UNIQUE KEY `email_us_unico` (`email_us`)
+  UNIQUE KEY `email_us_unico` (`email_us`),
+  UNIQUE KEY `google_us_unico` (`google_us`),
+  KEY `ip_us` (`ip_us`, `dtc_us`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 

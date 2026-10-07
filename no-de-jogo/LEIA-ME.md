@@ -65,6 +65,31 @@ cada sessão mostra uma página verde em vez do jogo.
 Os servidores "de empresa" com muitos núcleos lentos (Xeon/EPYC antigos)
 são piores para emulação do que um processador de secretária.
 
+## Onde alojar
+
+O site e o nó são duas coisas diferentes, e alojam-se em sítios diferentes.
+
+| Parte | Onde |
+|---|---|
+| **O site** (PHP, catálogo, contas, consolas de browser) | Um alojamento partilhado normal, como o plano Business da Hostinger. Precisa de PHP 7.4+, MySQL, HTTPS e a extensão `curl` (e `zip`, para BIOS em .zip). |
+| **O nó de jogo** (a PS2) | Uma máquina com **placa gráfica NVIDIA com NVENC** e acesso de administrador (root). Um alojamento partilhado ou uma VPS sem placa gráfica **não servem**, seja qual for o plano. |
+
+Para o nó, por ordem do mais barato para começar:
+
+1. **Um computador próprio** com uma RTX (3060 ou superior), ligado por fibra e com IP público (ou o router a reencaminhar as portas). Fica perto dos jogadores, e a distância conta muito no streaming.
+2. **Um servidor dedicado com GPU** (por exemplo, a linha GEX da Hetzner, com uma RTX 4000 Ada). Funciona bem, mas fica na Europa: para jogadores em Angola, o atraso nota-se.
+3. **GPU na nuvem à hora**, para medir antes de comprar. Tem de ser uma **máquina virtual completa** (o agente usa o Docker). Os "contentores com GPU" (RunPod, Vast.ai) não servem.
+
+**A placa tem de ter NVENC**, o codificador de vídeo. As placas de cálculo de topo, como a A100 e a H100, **não têm**. Servem: RTX de secretária, T4, L4, A10, A16, RTX 4000/A4000.
+
+### E a PS3?
+
+O site ainda não tem a PS3 (`Consolas.php`), mas a arquitectura é a mesma: um núcleo novo no agente, com o RPCS3. A diferença está no peso:
+- **por jogador:** um processador de secretária rápido e moderno, com AVX2 e 8 núcleos (Ryzen 7 7700, Core i7 de 13.ª geração ou superior), 16 GB de memória e uma RTX 3060 ou superior;
+- **numa máquina destas** cabe 1 jogador de PS3, talvez 2 em jogos leves e com um Ryzen 9 de 16 núcleos;
+- **os servidores com muitos núcleos lentos** (Xeon e EPYC) são piores para isto do que um processador de secretária;
+- **nem todos os jogos de PS3** correm bem no RPCS3. Há uma lista pública de compatibilidade, jogo a jogo.
+
 ## Instalar
 
 Os passos assumem o nó em `no1.exemplo.ao` e o site em

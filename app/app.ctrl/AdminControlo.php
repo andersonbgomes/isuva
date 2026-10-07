@@ -363,8 +363,12 @@ class AdminControlo extends Acao {
 			if($r === null){
 				$this->voltar('warning', 'BIOS', 'O envio da BIOS não chegou completo. Tente outra vez.', 'admin/emulador');
 			}
+			$r = Bios::deZip($consola, $r['disco'], $r['nome']);
+			if(is_string($r)){
+				$this->voltar('warning', 'BIOS', $r, 'admin/emulador');
+			}
 			Bios::guardar($consola, $r['disco'], $r['nome']);
-			$this->voltar('success', 'BIOS', 'A BIOS de '.$c['nome'].' foi gravada.', 'admin/emulador');
+			$this->voltar('success', 'BIOS', 'A BIOS de '.$c['nome'].' foi gravada ('.$r['nome'].').', 'admin/emulador');
 		}
 
 		$f = $_FILES['bios'] ?? null;
@@ -385,8 +389,12 @@ class AdminControlo extends Acao {
 			$this->voltar('danger', 'BIOS', 'Não foi possível guardar o ficheiro no servidor.', 'admin/emulador');
 		}
 
-		Bios::guardar($consola, $disco, $nome);
-		$this->voltar('success', 'BIOS', 'A BIOS de '.$c['nome'].' foi gravada.', 'admin/emulador');
+		$r = Bios::deZip($consola, $disco, $nome);
+		if(is_string($r)){
+			$this->voltar('warning', 'BIOS', $r, 'admin/emulador');
+		}
+		Bios::guardar($consola, $r['disco'], $r['nome']);
+		$this->voltar('success', 'BIOS', 'A BIOS de '.$c['nome'].' foi gravada ('.$r['nome'].').', 'admin/emulador');
 	}
 
 	public function apagarbios() {

@@ -1,0 +1,64 @@
+<?php
+/*
+Criar conta: nome, e-mail, palavra-passe -- e entra logo.
+O campo "site" é a armadilha dos robôs (ver RegistoControlo): escondido
+de quem vê e de quem usa um leitor de ecrã, e fora da ordem do Tab.
+*/
+$form = $_SESSION['registo_form'] ?? ['nome' => '', 'email' => ''];
+unset($_SESSION['registo_form']);
+?>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+	<?=head()?>
+	<meta name="theme-color" content="#18181b">
+	<link rel="stylesheet" href="<?=url_versionada('tema/padrao/ext/assets/css/estilo.css')?>">
+</head>
+<body>
+
+<div class="centrado">
+	<div class="cartao cartao-estreito">
+
+		<div class="marca-entrada"><?=icone('comando')?></div>
+		<h1 class="texto-centro" style="margin:0 0 4px">Criar conta</h1>
+		<p class="texto-fraco texto-centro">É grátis. Com conta, o que gravar nos jogos fica guardado e pode continuar em qualquer computador.</p>
+
+		<?php if(!empty($_SESSION['txt'])): ?>
+		<div class="aviso aviso-<?=esc($_SESSION['tp'] ?? 'info')?>">
+			<?php if(!empty($_SESSION['tt'])): ?><strong><?=esc($_SESSION['tt'])?></strong> <?php endif; ?>
+			<?=esc($_SESSION['txt'])?>
+		</div>
+		<?php unset($_SESSION['txt'], $_SESSION['tp'], $_SESSION['tt']); endif; ?>
+
+		<?php include _C_._P_.'tema'._P_.tema._P_.'auth'._P_.'_google.phtml'; ?>
+
+		<form method="post" action="<?=url_base('registo/criar')?>">
+			<?=csrf_field()?>
+
+			<div class="armadilha" aria-hidden="true">
+				<label for="site">Não preencher</label>
+				<input type="text" id="site" name="site" tabindex="-1" autocomplete="off">
+			</div>
+
+			<label for="nome">Nome</label>
+			<input type="text" id="nome" name="nome" required maxlength="150" autocomplete="name" value="<?=esc($form['nome'])?>" autofocus>
+
+			<label for="email">E-mail</label>
+			<input type="email" id="email" name="email" required maxlength="190" autocomplete="email" value="<?=esc($form['email'])?>">
+
+			<label for="senha">Palavra-passe</label>
+			<input type="password" id="senha" name="senha" required minlength="8" autocomplete="new-password">
+			<p class="ajuda">Pelo menos 8 caracteres.</p>
+
+			<button type="submit" class="btn btn-largo">Criar conta e entrar</button>
+		</form>
+
+		<p class="texto-centro texto-fraco" style="margin:20px 0 0">
+			Já tem conta? <a href="<?=url_base('auth')?>">Entrar</a><br>
+			<a href="<?=url_base('jogos')?>">Continuar sem conta</a>
+		</p>
+	</div>
+</div>
+
+</body>
+</html>
